@@ -63,7 +63,7 @@ dimnames(assay_lim) <- list(assay_immuno, times, c("lb", "ub"))
 
 assay_lim[, !grepl("Delta", times), "lb"] <- 
   floor(log10(llods[assay_immuno] / 2)) # lower bound same for all assays - days
-if (study_name=="PREVENT19" | study_name=="AZD1222") {
+if (study_name=="PREVENT19" | (study_name=="AZD1222" & "bindSpike" %in% assays)) {
   assay_lim["bindSpike", !grepl("Delta", times), "lb"] <- floor(log10(lloqs["bindSpike"] / 2))
   }# prevent19 and AZ has llod for bAb as NA, use lloq instead
 assay_lim[assay_immuno %in% bAb_assays, !grepl("Delta", times), "ub"] <- 

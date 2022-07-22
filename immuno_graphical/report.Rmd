@@ -15,7 +15,7 @@ here::i_am("immuno_graphical/report.Rmd")
 
 all_assays <- c("bindSpike", "bindRBD", "bindN", "pseudoneutid50", "pseudoneutid80", "liveneutmn50")
 
-if(include_bindN){
+if(include_bindN & study_name!="COVE" & study_name!="MockCOVE"){
   assay_immuno <- all_assays[all_assays %in% c(assays, "bindN")]
   labels.assays.all <- c("Binding Antibody to N", labels.assays)
   names(labels.assays.all)[1] <- "bindN"
@@ -31,7 +31,7 @@ is.ensemble <- study_name=="ENSEMBLE" | study_name=="MockENSEMBLE" # only ENSEMB
 
 config <- config::get(config = Sys.getenv("TRIAL"))
 if.pair <- ifelse(length(config$assays)>1, 1, 0)
-if.pos.exist <- ifelse(study_name=="AZD1222", 0, 1)
+if.pos.exist <- ifelse(study_name %in% c("AZD1222", "MockCOVE", "COVE"), 0, 1)
 
 minority.disclaimer <- switch(study_name, 
                               "COVE"="",
@@ -115,15 +115,18 @@ for (country in c("Nvx_US_Mex", if(study_name=="PREVENT19") "Nvx_US")){
       cat("\\clearpage", sep = '\n')
     }
   }
+  
+  if (if.pos.exist==1){
 
-  for (asy in assay_immuno){
-    
-    asyLabel <- gsub("%","\\\\%", labels.assays[asy])
-    
-    res = knitr::knit_child(c(here::here('immuno_graphical', 'report_pair_by_assay.Rmd')), quiet = TRUE)
-    cat(res, sep = '\n')
-    cat("\\clearpage", sep = '\n')
-    
+    for (asy in assay_immuno){
+      
+      asyLabel <- gsub("%","\\\\%", labels.assays[asy])
+      
+      res = knitr::knit_child(c(here::here('immuno_graphical', 'report_pair_by_assay.Rmd')), quiet = TRUE)
+      cat(res, sep = '\n')
+      cat("\\clearpage", sep = '\n')
+      
+    }
   }
 }
 ```
@@ -153,13 +156,16 @@ for (country in c("Nvx_US_Mex", if(study_name=="PREVENT19") "Nvx_US")){
     
   }
   
-  for (asy in assay_immuno){
+  if (if.pos.exist==1){
     
-    asyLabel <- gsub("%","\\\\%", labels.assays[asy])
-    
-    res = knitr::knit_child(c(here::here('immuno_graphical', 'report_pair_by_assay.Rmd')), quiet = TRUE)
-    cat(res, sep = '\n')
-    cat("\\clearpage", sep = '\n')
+    for (asy in assay_immuno){
+      
+      asyLabel <- gsub("%","\\\\%", labels.assays[asy])
+      
+      res = knitr::knit_child(c(here::here('immuno_graphical', 'report_pair_by_assay.Rmd')), quiet = TRUE)
+      cat(res, sep = '\n')
+      cat("\\clearpage", sep = '\n')
+    }
   }
     
 }
@@ -541,16 +547,19 @@ race and ethnic group","age and dichotomous classification of
 race and ethnic group",if(study_name=="ENSEMBLE")"country of residence", if(study_name=="ENSEMBLE")"HIV
 positivity")
 names(demoLabels) <- demos
+
+if (if.pos.exist==1){
   
-for (dm in demos){
-  for(tp in times[!times %in% c("B",paste0("Delta",timepoints[length(timepoints)],"over",timepoints[1]))]) {
-    
-    tpLabel <- gsub("ay ", "", labels.time[tp])
-    dmLabel <- demoLabels[dm]
-    
-    res = knitr::knit_child(c(here::here('immuno_graphical', 'report_box_demographic.Rmd')), quiet = TRUE)
-    cat(res, sep = '\n')
-    cat("\\clearpage", sep = '\n')
+  for (dm in demos){
+    for(tp in times[!times %in% c("B",paste0("Delta",timepoints[length(timepoints)],"over",timepoints[1]))]) {
+      
+      tpLabel <- gsub("ay ", "", labels.time[tp])
+      dmLabel <- demoLabels[dm]
+      
+      res = knitr::knit_child(c(here::here('immuno_graphical', 'report_box_demographic.Rmd')), quiet = TRUE)
+      cat(res, sep = '\n')
+      cat("\\clearpage", sep = '\n')
+    }
   }
 }
     
@@ -575,15 +584,17 @@ race and ethnic group",if(study_name=="ENSEMBLE")"country of residence", if(stud
 positivity")
 names(demoLabels) <- demos
   
-for (dm in demos){
-  for(tp in times[!times %in% c("B",paste0("Delta",timepoints[length(timepoints)],"over",timepoints[1]))]) {
-    
-    tpLabel <- gsub("ay ", "", labels.time[tp])
-    dmLabel <- demoLabels[dm]
-    
-    res = knitr::knit_child(c(here::here('immuno_graphical', 'report_box_demographic.Rmd')), quiet = TRUE)
-    cat(res, sep = '\n')
-    cat("\\clearpage", sep = '\n')
+if (if.pos.exist==1){
+  for (dm in demos){
+    for(tp in times[!times %in% c("B",paste0("Delta",timepoints[length(timepoints)],"over",timepoints[1]))]) {
+      
+      tpLabel <- gsub("ay ", "", labels.time[tp])
+      dmLabel <- demoLabels[dm]
+      
+      res = knitr::knit_child(c(here::here('immuno_graphical', 'report_box_demographic.Rmd')), quiet = TRUE)
+      cat(res, sep = '\n')
+      cat("\\clearpage", sep = '\n')
+    }
   }
 }
     

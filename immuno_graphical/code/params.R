@@ -23,7 +23,8 @@ live_assays <- c("liveneutmn50")
 times <- c("B", paste0("Day", config$timepoints), paste0("Delta", config$timepoints, "overB"))
 
 # Depends on the Incoming data
-if(include_bindN){
+# Peter requested removing N protein for this figure for Moderna LVMN report
+if(include_bindN & study_name!="COVE" & study_name!="MockCOVE"){
   assay_immuno <- all_assays[all_assays %in% c(assays, "bindN")]
   labels.assays.all <- c("Binding Antibody to N", labels.assays)
   names(labels.assays.all)[1] <- "bindN"

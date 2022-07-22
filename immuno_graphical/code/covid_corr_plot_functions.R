@@ -399,7 +399,7 @@ covid_corr_rcdf_facets <- function(plot_dat,
                                      "#FF5EBF", "#3700A5", "#8F8F8F",
                                      "#787873"
                                    ),
-                                   legend = levels(plot_dat[, color]),
+                                   legend = levels(droplevels(plot_dat[, color])),
                                    legend_size = 10,
                                    legend_nrow = ceiling(length(legend) / 2),
                                    panel_titles,
