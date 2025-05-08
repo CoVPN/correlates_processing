@@ -89,11 +89,7 @@ if(study_name %in% c("COVAIL")){
   
   # Derive maxVar: the maximum number of variables that will be allowed by SL screens in the models.
   np <- sum(dat.ph1 %>% select(matches(endpoint)))
-  if(study_name %in% c("COVAIL")){
-    maxVar <- max(6, floor(np / 6))
-  } else {
-    maxVar <- max(20, floor(np / 20))
-  }
+  maxVar <- max(20, floor(np / 20))
   
   all_risk_vars <- risk_vars
   
