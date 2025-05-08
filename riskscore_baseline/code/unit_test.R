@@ -8,6 +8,7 @@ if(attr(config, "config") == "prevent19"){
                 NA) 
 } else {
   tmp <- switch(attr(config, "config"),
+                covail = "44c2d6904f70797419943c9c63066bab",
                 moderna_real = "9f238311b6f252204336eecdc85efdc1",
                 moderna_mock = "9df4cd6639381811e763c2dddc0a12fd",
                 janssen_pooled_mock = "f7a8225eb5fa8cc9a5426211988b9d95",
@@ -23,7 +24,7 @@ if(Sys.getenv("NOCHECK") == "" &
    all.equal(names(inputFile_with_riskscore %>% select(Ptid, risk_score, standardized_risk_score)), c("Ptid", "risk_score", "standardized_risk_score"))){
   
   if(!is.na(tmp)){
-    if(attr(config, "config") %in% c("moderna_real", "moderna_mock", "janssen_pooled_mock", "janssen_pooled_real", "azd1222", "vat08_combined")){
+    if(attr(config, "config") %in% c("moderna_real", "moderna_mock", "janssen_pooled_mock", "janssen_pooled_real", "azd1222", "vat08_combined", "covail")){
       assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == tmp, 
                               msg = paste0("failed risk_score digest check. Old digest ", tmp, ". New digest ", digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))])))
       

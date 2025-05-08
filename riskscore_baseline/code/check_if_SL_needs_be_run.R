@@ -8,7 +8,6 @@ generate_new_riskscores <- function(){
     source(here("code", "tables_figures.R"))
     source(here("code", "constructSL_getSLweights_Modelpredictors.R"))
     source(here("code", "append_risk_score_to_data.R"))
-    source(here("code", "test_risk_scores.R"))
   } else if(study_name == "ENSEMBLE" & Sys.getenv("TRIAL") == "janssen_sa_partA_3008"){
     source(here("code", "clean_output_dir.R"))
     source(here("code", "run_cvsl_riskscore.R"))

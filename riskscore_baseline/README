@@ -1,0 +1,3 @@
+To create the report from report.Rmd, go to Terminal and at the riskscore_baseline directory level, enter the command: 
+
+Rscript -e "rmarkdown::render('./report.Rmd')"
