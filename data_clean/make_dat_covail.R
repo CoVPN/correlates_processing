@@ -250,6 +250,10 @@ with(dat.tmp.impute, print(table(!is.na(get("Day181"%.%assays[1])), !is.na(get("
 # before imputation, log transform markers because distributions are skewed. we want models for imputation work on transformed variables
 
 tcellvv=c(S1, S2, N)
+  
+tmp=c(outer(c("B", "Day15", "Day91", "Day181"), tcellvv, "%.%"))
+dat_proc[tmp] = log10 (dat_proc[tmp])
+# summary(dat_proc[tmp])
 
 n.imp=1
 tp=15
@@ -323,7 +327,6 @@ assertthat::assert_that(
 # 6. transformation of the markers
 
 # create S-stimulated markers by summing up S1 and S2 on the anti log scale
-
 for (a in c(tcellsubsets%.%"_COV2.CON.S", tcellsubsets%.%"_BA.4.5.S")) {
   for (tp in c("B","Day15","Day91","Day181")) {
     dat_proc[[tp%.%a]] = log10 (10^dat_proc[[tp%.%a%.%"1"]] + 10^dat_proc[[tp%.%a%.%"2"]])
