@@ -68,6 +68,8 @@ dat_proc$Wstratum = dat_proc$tps.stratum
 dat_proc$Wstratum[with(dat_proc, COVIDIndD31_7toM12==1 & Trt==0)]=99
 dat_proc$Wstratum[with(dat_proc, COVIDIndD31_7toM12==1 & Trt==1)]=100 
 
+dat_proc$SubcohortInd = dat_proc$ph2.immuno
+
 mytable(dat_proc$Trt, dat_proc$tps.stratum) 
 table.prop(dat_proc$ph2.immuno, dat_proc$demo.stratum)
 table.prop(dat_proc$ph2.AB.immuno, dat_proc$demo.stratum)
@@ -78,11 +80,12 @@ table.prop(dat_proc$ph2.AB.immuno, dat_proc$demo.stratum)
 # 4. Define ph1, ph2, and weights
 # Note that Wstratum may have NA if any variables to form strata has NA
 {
-
 tp="31_7"
-dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp,    ph2="ph2.D"%.%tp,    Wstratum="Wstratum",       wt="wt.D"%.%tp, verbose=T) 
+dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp,    ph2="ph2.D"%.%tp,    Wstratum="Wstratum",       wt="wt.D"%.%tp,    verbose=T) 
 dat_proc = add.wt(dat_proc, ph1="ph1.AB.D"%.%tp, ph2="ph2.AB.D"%.%tp, Wstratum="Wstratum",       wt="wt.AB.D"%.%tp, verbose=T)
 
+dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp,    ph2="ph2.immuno",    Wstratum="tps.stratum",    wt="wt.immuno",    verbose=T) 
+dat_proc = add.wt(dat_proc, ph1="ph1.AB.D"%.%tp, ph2="ph2.AB.immuno", Wstratum="tps.stratum",    wt="wt.AB.immuno", verbose=T)
 }
 
 
@@ -164,6 +167,8 @@ dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp",
 dat_proc$tmp = NULL
 }
 
+
+
 ###############################################################################
 # 10. impute covariates if necessary
 
@@ -172,7 +177,6 @@ dat_proc$tmp = NULL
 ###############################################################################
 # special handling 
 
-dat_proc$SubcohortInd = dat_proc$ph2.immuno
 
 
 ###############################################################################

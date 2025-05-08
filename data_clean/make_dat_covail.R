@@ -225,17 +225,17 @@ assertthat::assert_that(
 )
 
 
-#### none missing to impute D29 among those at risk at D29
+#### none missing at D29 among those at risk at D29
 dat.tmp.impute <- subset(dat_proc, ph1.D15==1 & COVIDtimeD22toD181>NumberdaysD15toD29 & AsympInfectIndD15to29==0)
 with(dat.tmp.impute, print(table(!is.na(get("Day29"%.%assays[1])), !is.na(get("Day15"%.%assays[1])))))
 # thus, no missingness actually
 
-#### none missing to impute D91 among those at risk at D91
+#### none missing at D91 among those at risk at D91
 dat.tmp.impute <- subset(dat_proc, ph1.D15==1 & COVIDtimeD22toD181>NumberdaysD15toD91 & AsympInfectIndD15to91==0)
 with(dat.tmp.impute, print(table(!is.na(get("Day91"%.%assays[1])), !is.na(get("Day15"%.%assays[1])))))
 # thus, no missingness actually
 
-#### none missing to impute D181 among those at risk at D181
+#### none missing at D181 among those at risk at D181
 dat.tmp.impute <- subset(dat_proc, ph1.D15==1 & COVIDtimeD22toD181>NumberdaysD15toD181 & AsympInfectIndD15to181==0)
 with(dat.tmp.impute, print(table(!is.na(get("Day181"%.%assays[1])), !is.na(get("Day15"%.%assays[1])))))
 # thus, no missingness actually
@@ -321,6 +321,7 @@ assertthat::assert_that(
 
 ###############################################################################
 # 6. transformation of the markers
+
 # create S-stimulated markers by summing up S1 and S2 on the anti log scale
 
 for (a in c(tcellsubsets%.%"_COV2.CON.S", tcellsubsets%.%"_BA.4.5.S")) {
@@ -383,12 +384,14 @@ for (t in c("B", "Day15", "Day29", "Day91", "Day181")) {
 # thus no need to do, say, lloq censoring
 # but there is a need to do uloq censoring before computing delta
 {
-assays1=assays # here, mdw scores delta are computed as weighted average of delta, not as delta of mdw
+# mdw scores delta are computed as weighted average of delta, not as delta of mdw
+# include S1, S2, S, N tcell markers
+assays1=union(assays, tcellvv) 
 
 tmp=list()
 for (a in assays1) {
   for (t in c("B", paste0("Day", config$timepoints)) ) {
-    tmp[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] > log10(uloqs[a]), log10(uloqs[a]), dat_proc[[t %.% a]])
+    tmp[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] > log10(uloqs[marker.name.to.assay(t %.% a)]), log10(uloqs[marker.name.to.assay(t %.% a)]), dat_proc[[t %.% a]])
   }
 }
 tmp=as.data.frame(tmp) # cannot subtract list from list, but can subtract data frame from data frame
@@ -422,15 +425,21 @@ dat_proc["Delta29overB" %.% assays1] <- tmp["Day29" %.% assays1] - tmp["B" %.% a
 {
 # mRNA arms
 dat_proc$tmp = with(dat_proc, ph1.D15 & TrtonedosemRNA==1) 
-# assays = c("pseudoneutid50_D614G", "pseudoneutid50_Delta", "pseudoneutid50_Beta", "pseudoneutid50_BA.1", "pseudoneutid50_BA.4.BA.5", "pseudoneutid50_MDW")
-all.markers = c("B"%.%assays1, "Day15"%.%assays, "Delta15overB"%.%assays)
+assays1 = c("pseudoneutid50_D614G", "pseudoneutid50_Delta", "pseudoneutid50_Beta", "pseudoneutid50_BA.1", "pseudoneutid50_BA.4.BA.5", "pseudoneutid50_MDW")
+all.markers = c("B"%.%assays1, "Day15"%.%assays1, "Delta15overB"%.%assays1)
 dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D15", verbose=T)
 
-# # Sanofi arms
+# Sanofi arms
 dat_proc$tmp = with(dat_proc, ph1.D29 & TrtSanofi==1)
 assays1 = c(nAb, "pseudoneutid50_MDW")
 all.markers = c("Day29"%.%assays1, "Delta29overB"%.%assays1)
 dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D29", verbose=F)
+
+# T cell markers for both mRNA and Sanofi
+dat_proc$tmp = with(dat_proc, ph1.D15) 
+assays1=c(S, S1, S2, N)
+all.markers = c("B"%.%assays1, "Day15"%.%assays1, "Delta15overB"%.%assays1)
+dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D15", verbose=T)
 
 # remove the temp ph2 column
 dat_proc$tmp = NULL
