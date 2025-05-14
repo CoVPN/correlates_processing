@@ -11,7 +11,7 @@ ows_trial: &ows_trial
 
 
 nextgen_mock: &nextgen_mock
-  mapped_data: /trials/barda/NextGen_mock/analysis/adata/COVID_NextGen_mock_mapped_20250505.csv
+  mapped_data: /trials/barda/NextGen_mock/analysis/adata/COVID_NextGen_mock_mapped_20250514.csv
   assay_metadata: ../correlates_reporting2/assay_metadata/nextgen_mock_assay_metadata.csv
   two_marker_timepoints: no
   timepoints: [31] 
