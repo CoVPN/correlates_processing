@@ -57,6 +57,7 @@ begin=Sys.time()
   S1=c(tcellsubsets%.%"_COV2.CON.S1", tcellsubsets%.%"_BA.4.5.S1")
   S2=c(tcellsubsets%.%"_COV2.CON.S2", tcellsubsets%.%"_BA.4.5.S2")
   N=tcellsubsets%.%"_Wuhan.N"
+  tcellvv=c(S1, S2, N)
   
   nAb = setdiff(assays[startsWith(assays, "pseudoneutid50_")], c('pseudoneutid50_MDW'))
 }
@@ -244,56 +245,71 @@ with(dat.tmp.impute, print(table(!is.na(get("Day181"%.%assays[1])), !is.na(get("
 
 {
 # T cell data
+
+# before imputation, log transform markers because distributions are skewed. we want models for imputation work on transformed variables
+  # for FS, imputation is done on log scale. later, in step 6, they will be transformed back to the linear scale
+tmp=c(outer(c("B", "Day15", "Day91", "Day181"), 
+            tcellvv,
+            "%.%"))
+dat_proc[tmp] = log10 (dat_proc[tmp])
   
+dat_proc$arm.factor = as.factor(dat_proc$arm)
+
 # impute S1, S2, and N-stim T cell markers at B and D15 together. not impute markers at Day91 or D181
 # impute different arms and naive/nnaive together, but pass arm and naive as covariates
-# before imputation, log transform markers because distributions are skewed. we want models for imputation work on transformed variables
 
-tcellvv=c(S1, S2, N)
+for(ii in 1:2) {
+# in the first iteration, skip cd8 FS so that the numerical results in the interim report will be preserved 
+  n.imp=1
+  tp=15
   
-tmp=c(outer(c("B", "Day15", "Day91", "Day181"), tcellvv, "%.%"))
-dat_proc[tmp] = log10 (dat_proc[tmp])
-# summary(dat_proc[tmp])
+  if (ii==1) {
+    imp.markers=c(outer(c("B", "Day"%.%tp), 
+                        setdiff(tcellvv, c("cd8_FS_Wuhan.N", "cd8_FS_COV2.CON.S1","cd8_FS_BA.4.5.S1", "cd8_FS_COV2.CON.S2", "cd8_FS_BA.4.5.S2")), 
+                        "%.%"))
+  } else {
+    imp.markers=c(outer(c("B", "Day"%.%tp), tcellvv, "%.%"))
+  }
+  
+  # add arm and naive to the imputation dataset
+  imp.markers =  c(imp.markers, "arm.factor", "naive")
+  
+  dat.tmp.impute <- subset(dat_proc, get("TwophasesampIndD15.tcell") == 1)
+  
+  imp <- dat.tmp.impute %>% select(all_of(imp.markers))     
+  
+  # there is one -Inf in a FS
+  imp[imp==-Inf]=NA
+  
+  if(any(is.na(imp))) {
+    # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
+    imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
+    dat.tmp.impute[, imp.markers] <- mice::complete(imp, action = 1)
+  }                
+  
+  # missing markers imputed properly?
+  assertthat::assert_that(
+    all(complete.cases(dat.tmp.impute[, imp.markers])),
+    msg = "missing markers imputed properly?"
+  )    
+  
+  # populate dat_proc imp.markers with the imputed values
+  dat_proc[dat_proc[["TwophasesampIndD15.tcell"]]==1, imp.markers] <-
+    dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["TwophasesampIndD15.tcell"]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
+  
+  assertthat::assert_that(
+    all(complete.cases(dat_proc[dat_proc[["TwophasesampIndD15.tcell"]] == 1, imp.markers])),
+    msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
+  )
+  }
 
-n.imp=1
-tp=15
-# impute both markers and resp calls
-imp.markers=c(outer(c("B", "Day"%.%tp), tcellvv, "%.%"))
-# add arm and naive to the imputation dataset
-dat_proc$arm.factor = as.factor(dat_proc$arm)
-imp.markers =  c(imp.markers, "arm.factor", "naive")
-
-dat.tmp.impute <- subset(dat_proc, get("TwophasesampIndD15.tcell") == 1)
-
-imp <- dat.tmp.impute %>% select(all_of(imp.markers))         
-if(any(is.na(imp))) {
-  # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
-  imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
-  dat.tmp.impute[, imp.markers] <- mice::complete(imp, action = 1)
-}                
-
-# missing markers imputed properly?
-assertthat::assert_that(
-  all(complete.cases(dat.tmp.impute[, imp.markers])),
-  msg = "missing markers imputed properly?"
-)    
-
-# populate dat_proc imp.markers with the imputed values
-dat_proc[dat_proc[["TwophasesampIndD15.tcell"]]==1, imp.markers] <-
-  dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["TwophasesampIndD15.tcell"]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
-
-assertthat::assert_that(
-  all(complete.cases(dat_proc[dat_proc[["TwophasesampIndD15.tcell"]] == 1, imp.markers])),
-  msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
-)
 }
 
 
+# imputing 0/1 variables with mice is extremely slow, so we do it with glm
 
-
-# imputing 0/1 variables with mice is extremely slow
-
-imp.markers=c(outer(c("B", "Day"%.%tp), tcellvv, "%.%")) %.%"_resp"
+# there are no resp variables for FS
+imp.markers=c(outer(c("B", "Day"%.%tp), tcellvv[!grepl("FS", tcellvv)], "%.%")) %.%"_resp"
 
 dat.tmp.impute <- subset(dat_proc, get("TwophasesampIndD15.tcell") == 1)
 
@@ -333,20 +349,29 @@ for (a in c(tcellsubsets%.%"_COV2.CON.S", tcellsubsets%.%"_BA.4.5.S")) {
   }
 }
 
+# transform FS back to the linear scale
+fs=tcellsubsets[grepl("FS", tcellsubsets)]
+for (a in c(outer(fs, c("_COV2.CON.S", "_BA.4.5.S", "_COV2.CON.S1", "_BA.4.5.S1", "_COV2.CON.S2", "_BA.4.5.S2", "_Wuhan.N"), paste0))) {
+  for (tp in c("B","Day15","Day91","Day181")) {
+    dat_proc[[tp%.%a]] = 10^dat_proc[[tp%.%a]]
+  }
+}
+
 # add pos call columns for S markers as the OR of S1 and S2
-tmp=c(outer(c("B", "Day15", "Day91", "Day181"), S, "%.%"))
+tmp=c(outer(c("B", "Day15", "Day91", "Day181"), S[!grepl("FS", S)], "%.%"))
 for (a in tmp) dat_proc[[glue("{a}_resp")]] = pmax(dat_proc[[glue("{a}1_resp")]], dat_proc[[glue("{a}2_resp")]])
 
-# at 20% threshold, pos calls for BA.4.5.S and COV2.CON.S markers are identical
-COV2.CON.S = S[endsWith(S, "COV2.CON.S")]
-BA.4.5.S = S[endsWith(S, "BA.4.5.S")]
-stopifnot(all(sub("COV2.CON.S","",COV2.CON.S) == sub("BA.4.5.S","",BA.4.5.S))) # make sure ordering is the same
 
-tmp=c(outer(c("B", "Day15", "Day91", "Day181"), COV2.CON.S, "%.%"))
-pos1 = sapply(tmp%.%"_resp", function(x) mean(dat_proc[[x]], na.rm=T))
-tmp=c(outer(c("B", "Day15", "Day91", "Day181"), BA.4.5.S, "%.%"))
-pos2 = sapply(tmp%.%"_resp", function(x) mean(dat_proc[[x]], na.rm=T))
-all((pos1>=0.2) == (pos2>=0.2))
+# # at 20% threshold, pos calls for BA.4.5.S and COV2.CON.S markers are identical
+# COV2.CON.S = S[endsWith(S, "COV2.CON.S")]
+# BA.4.5.S = S[endsWith(S, "BA.4.5.S")]
+# stopifnot(all(sub("COV2.CON.S","",COV2.CON.S) == sub("BA.4.5.S","",BA.4.5.S))) # make sure ordering is the same
+# 
+# tmp=c(outer(c("B", "Day15", "Day91", "Day181"), COV2.CON.S, "%.%"))
+# pos1 = sapply(tmp%.%"_resp", function(x) mean(dat_proc[[x]], na.rm=T))
+# tmp=c(outer(c("B", "Day15", "Day91", "Day181"), BA.4.5.S, "%.%"))
+# pos2 = sapply(tmp%.%"_resp", function(x) mean(dat_proc[[x]], na.rm=T))
+# all((pos1>=0.2) == (pos2>=0.2))
 
 
 
@@ -468,13 +493,14 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 
 
 
+
 ###############################################################################
 # digest check
 
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         covail = "a6331ba037f48bebf626e4c961689f37",
+         covail = "4184afb4a3c9cd69a18ba56a926c1940",
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, 
       msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
