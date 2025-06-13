@@ -60,6 +60,7 @@ begin=Sys.time()
   tcellvv=c(S1, S2, N)
   
   nAb = setdiff(assays[startsWith(assays, "pseudoneutid50_")], c('pseudoneutid50_MDW'))
+  frnt=assays[startsWith(assays, "frnt")]
 }
 
 
@@ -133,6 +134,8 @@ dat_proc$Wstratum.tcell[with(dat_proc, COVIDIndD92toD181==1 & stage==3)]=96
 dat_proc$Wstratum.tcell[with(dat_proc, COVIDIndD22toD91 ==1 & stage==4)]=97 
 dat_proc$Wstratum.tcell[with(dat_proc, COVIDIndD92toD181==1 & stage==4)]=98
 
+dat_proc$Wstratum.frnt = dat_proc$Wstratum.tcell
+
 if (!is.null(dat_proc$Wstratum.tcell)) table(dat_proc$Wstratum.tcell) # variables may be named other than Wstratum
 }
 
@@ -155,10 +158,12 @@ dat_proc[["wt.D92"]] = 1
 dat_proc[["ph2.D29"]]=dat_proc$ph1.D29
 dat_proc[["wt.D29"]] = 1
 
-# filter out arm 15 and 17
+# filter out arm 16 and 17
 dat_proc$ph1.D15.tcell = ifelse (dat_proc$ph1.D15==1 & dat_proc$arm<=15, 1, 0)
 dat_proc$ph1.D92.tcell = ifelse (dat_proc$ph1.D92==1 & dat_proc$arm<=15, 1, 0)
-
+dat_proc$ph1.D15.frnt = dat_proc$ph1.D15.tcell
+dat_proc$ph1.D92.frnt = dat_proc$ph1.D92.tcell 
+  
 # N is not included in the def of TwophasesampInd b/c ptids with S also have N, at almost all time points
 dat_proc$TwophasesampIndD15.tcell  = apply(dat_proc, 1, function (x) any(!is.na(x[glue("Day15{c(S1,S2)}")])))
 dat_proc$TwophasesampIndB.tcell  = apply(dat_proc, 1, function (x) any(!is.na(x[glue("B{c(S1,S2)}")])))
@@ -168,6 +173,9 @@ mytable(dat_proc$TwophasesampIndB.tcell, dat_proc$TwophasesampIndD15.tcell, dat_
 dat_proc$TwophasesampIndD15.tcell = dat_proc$TwophasesampIndB.tcell | dat_proc$TwophasesampIndD15.tcell
 # remove TwophasesampIndB.tcell
 dat_proc$TwophasesampIndB.tcell = NULL
+
+dat_proc$TwophasesampIndD15.frnt  = apply(dat_proc, 1, function (x) any(!is.na(x[c(glue("B{frnt}"), glue("Day15{frnt}"))])))
+
 
 # this shows that cases from D182 on are sampled like controls 
 dat_proc$case.period=NA
@@ -180,7 +188,13 @@ with(dat_proc[dat_proc$ph1.D15.tcell==1,], mytable(case.period, TwophasesampIndD
 # use TwophasesampIndD15.tcell for both 
 for (tp in c(15,92)) {
   dat_proc[["ph2.D"%.%tp%.%".tcell"]] = dat_proc[["ph1.D"%.%tp%.%".tcell"]] & dat_proc[["TwophasesampIndD15.tcell"]]
-  dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp%.%".tcell", ph2="ph2.D"%.%tp%.%".tcell", Wstratum="Wstratum", wt="wt.D"%.%tp%.%".tcell", verbose=T) 
+  # 6/12/25 bug fix: Wstratum => Wstratum.tcell
+  dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp%.%".tcell", ph2="ph2.D"%.%tp%.%".tcell", Wstratum="Wstratum.tcell", 
+                    wt="wt.D"%.%tp%.%".tcell", verbose=T) 
+
+  dat_proc[["ph2.D"%.%tp%.%".frnt"]] = dat_proc[["ph1.D"%.%tp%.%".frnt"]] & dat_proc[["TwophasesampIndD15.frnt"]]
+  dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp%.%".frnt",  ph2="ph2.D"%.%tp%.%".frnt", Wstratum="Wstratum.frnt", 
+                    wt="wt.D"%.%tp%.%".frnt", verbose=T) 
 }
 
 }
@@ -258,52 +272,49 @@ dat_proc$arm.factor = as.factor(dat_proc$arm)
 # impute S1, S2, and N-stim T cell markers at B and D15 together. not impute markers at Day91 or D181
 # impute different arms and naive/nnaive together, but pass arm and naive as covariates
 
-for(ii in 1:2) {
-# in the first iteration, skip cd8 FS so that the numerical results in the interim report will be preserved 
-  n.imp=1
-  tp=15
-  
-  if (ii==1) {
-    imp.markers=c(outer(c("B", "Day"%.%tp), 
-                        setdiff(tcellvv, c("cd8_FS_Wuhan.N", "cd8_FS_COV2.CON.S1","cd8_FS_BA.4.5.S1", "cd8_FS_COV2.CON.S2", "cd8_FS_BA.4.5.S2")), 
-                        "%.%"))
-  } else {
-    imp.markers=c(outer(c("B", "Day"%.%tp), tcellvv, "%.%"))
-  }
-  
-  # add arm and naive to the imputation dataset
-  imp.markers =  c(imp.markers, "arm.factor", "naive")
-  
-  dat.tmp.impute <- subset(dat_proc, get("TwophasesampIndD15.tcell") == 1)
-  
-  imp <- dat.tmp.impute %>% select(all_of(imp.markers))     
-  
-  # there is one -Inf in a FS
-  imp[imp==-Inf]=NA
-  
-  if(any(is.na(imp))) {
-    # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
-    imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
-    dat.tmp.impute[, imp.markers] <- mice::complete(imp, action = 1)
-  }                
-  
-  # missing markers imputed properly?
-  assertthat::assert_that(
-    all(complete.cases(dat.tmp.impute[, imp.markers])),
-    msg = "missing markers imputed properly?"
-  )    
-  
-  # populate dat_proc imp.markers with the imputed values
-  dat_proc[dat_proc[["TwophasesampIndD15.tcell"]]==1, imp.markers] <-
-    dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["TwophasesampIndD15.tcell"]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
-  
-  assertthat::assert_that(
-    all(complete.cases(dat_proc[dat_proc[["TwophasesampIndD15.tcell"]] == 1, imp.markers])),
-    msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
-  )
-  }
+n.imp=1
+tp=15
 
-}
+# if (ii==1) {
+#   imp.markers=c(outer(c("B", "Day"%.%tp), 
+#                       setdiff(tcellvv, c("cd8_FS_Wuhan.N", "cd8_FS_COV2.CON.S1","cd8_FS_BA.4.5.S1", "cd8_FS_COV2.CON.S2", "cd8_FS_BA.4.5.S2")), 
+#                       "%.%"))
+# } else {
+  imp.markers=c(outer(c("B", "Day"%.%tp), tcellvv, "%.%"))
+# }
+
+# add arm and naive to the imputation dataset
+imp.markers =  c(imp.markers, "arm.factor", "naive")
+
+dat.tmp.impute <- subset(dat_proc, get("TwophasesampIndD15.tcell") == 1)
+
+imp <- dat.tmp.impute %>% select(all_of(imp.markers))     
+
+# there is one -Inf in a FS
+imp[imp==-Inf]=NA
+
+if(any(is.na(imp))) {
+  # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
+  imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
+  dat.tmp.impute[, imp.markers] <- mice::complete(imp, action = 1)
+}                
+
+# missing markers imputed properly?
+assertthat::assert_that(
+  all(complete.cases(dat.tmp.impute[, imp.markers])),
+  msg = "missing markers imputed properly?"
+)    
+
+# populate dat_proc imp.markers with the imputed values
+dat_proc[dat_proc[["TwophasesampIndD15.tcell"]]==1, imp.markers] <-
+  dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["TwophasesampIndD15.tcell"]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
+
+assertthat::assert_that(
+  all(complete.cases(dat_proc[dat_proc[["TwophasesampIndD15.tcell"]] == 1, imp.markers])),
+  msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
+)
+
+
 
 
 # imputing 0/1 variables with mice is extremely slow, so we do it with glm
@@ -336,6 +347,55 @@ assertthat::assert_that(
   all(complete.cases(dat_proc[dat_proc[["TwophasesampIndD15.tcell"]] == 1, imp.markers])),
   msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
 )
+
+}
+
+
+
+{
+# FRNT
+
+# impute FRNT50, FRNT80 at B and D15 together.
+# impute different arms and naive/nnaive together, but pass arm and naive as covariates
+
+n.imp=1
+tp=15
+
+imp.markers=c(outer(c("B", "Day"%.%tp), frnt, "%.%"))
+
+# add arm and naive to the imputation dataset
+imp.markers =  c(imp.markers, "arm.factor", "naive")
+
+dat.tmp.impute <- subset(dat_proc, get("TwophasesampIndD15.frnt") == 1)
+
+imp <- dat.tmp.impute %>% select(all_of(imp.markers))     
+
+# there is one -Inf in a FS
+imp[imp==-Inf]=NA
+
+if(any(is.na(imp))) {
+  # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
+  imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
+  dat.tmp.impute[, imp.markers] <- mice::complete(imp, action = 1)
+}                
+
+# missing markers imputed properly?
+assertthat::assert_that(
+  all(complete.cases(dat.tmp.impute[, imp.markers])),
+  msg = "missing markers imputed properly?"
+)    
+
+# populate dat_proc imp.markers with the imputed values
+dat_proc[dat_proc[["TwophasesampIndD15.frnt"]]==1, imp.markers] <-
+  dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["TwophasesampIndD15.frnt"]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
+
+assertthat::assert_that(
+  all(complete.cases(dat_proc[dat_proc[["TwophasesampIndD15.frnt"]] == 1, imp.markers])),
+  msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
+)
+
+}
+
 
 
 
@@ -451,23 +511,44 @@ dat_proc["Delta29overB" %.% assays1] <- tmp["Day29" %.% assays1] - tmp["B" %.% a
 ###############################################################################
 # 9. add discrete/trichotomized markers
 {
-# mRNA arms
+
+## ID50
+  
+# mRNA arms, D15, B, fold change
 dat_proc$tmp = with(dat_proc, ph1.D15 & TrtonedosemRNA==1) 
+# neut
 assays1 = c("pseudoneutid50_D614G", "pseudoneutid50_Delta", "pseudoneutid50_Beta", "pseudoneutid50_BA.1", "pseudoneutid50_BA.4.BA.5", "pseudoneutid50_MDW")
 all.markers = c("B"%.%assays1, "Day15"%.%assays1, "Delta15overB"%.%assays1)
 dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D15", verbose=T)
 
-# Sanofi arms
+# Sanofi arms, Day29, fold change from B
 dat_proc$tmp = with(dat_proc, ph1.D29 & TrtSanofi==1)
+# neut
 assays1 = c(nAb, "pseudoneutid50_MDW")
 all.markers = c("Day29"%.%assays1, "Delta29overB"%.%assays1)
 dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D29", verbose=F)
 
-# T cell markers for both mRNA and Sanofi
+
+## frnt, both mRNA and Sanofi, D15, B, fold change
+dat_proc$tmp = with(dat_proc, ph2.D15.frnt) 
+assays1 = frnt
+all.markers = c("B"%.%assays1, "Day15"%.%assays1, "Delta15overB"%.%assays1)
+dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D15.frnt", verbose=T)
+
+# no day29 frnt data yet
+# # frnt, Sanofi, Day29, fold change from B
+# dat_proc$tmp = with(dat_proc, ph2.D15.frnt & TrtSanofi==1)
+# assays1 = frnt
+# all.markers = c("Day29"%.%assays1, "Delta29overB"%.%assays1)
+# dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D29", verbose=F)
+
+
+## T cell markers for both mRNA and Sanofi, D15, B, fold change
 dat_proc$tmp = with(dat_proc, ph1.D15) 
 assays1=c(S, S1, S2, N)
 all.markers = c("B"%.%assays1, "Day15"%.%assays1, "Delta15overB"%.%assays1)
-dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D15", verbose=T)
+dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D15.tcell", verbose=T)
+
 
 # remove the temp ph2 column
 dat_proc$tmp = NULL
@@ -500,7 +581,7 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         covail = "4184afb4a3c9cd69a18ba56a926c1940",
+         covail = "cc1fc791c8e384ba9b1c96790da26930",
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, 
       msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    

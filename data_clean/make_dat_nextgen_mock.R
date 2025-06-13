@@ -29,6 +29,16 @@ begin=Sys.time()
   
   dat_proc$Track = as.factor(dat_proc$Track)
   
+  
+  # add additional ccIAS-xx variables
+  dat_proc$ph2.sera.D31_7 = dat_proc$ph2.D31_7
+  dat_proc$ph2.saliva.D31_7 = dat_proc$ph2.D31_7
+  dat_proc$ph2.nasal.D31_7 = dat_proc$ph2.D31_7
+  
+  # add additional RIS-xx variables
+  dat_proc$ph2.sera.immuno = dat_proc$ph2.immuno
+  dat_proc$ph2.saliva.immuno = dat_proc$ph2.immuno
+  dat_proc$ph2.nasal.immuno = dat_proc$ph2.immuno
 }
 
 
@@ -81,11 +91,15 @@ table.prop(dat_proc$ph2.AB.immuno, dat_proc$demo.stratum)
 # Note that Wstratum may have NA if any variables to form strata has NA
 {
 tp="31_7"
-dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp,    ph2="ph2.D"%.%tp,    Wstratum="Wstratum",       wt="wt.D"%.%tp,    verbose=T) 
-dat_proc = add.wt(dat_proc, ph1="ph1.AB.D"%.%tp, ph2="ph2.AB.D"%.%tp, Wstratum="Wstratum",       wt="wt.AB.D"%.%tp, verbose=T)
+dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp,    ph2="ph2.sera.D"%.%tp,      Wstratum="Wstratum",       wt="wt.sera.D"%.%tp,     verbose=T) 
+dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp,    ph2="ph2.saliva.D"%.%tp,    Wstratum="Wstratum",       wt="wt.saliva.D"%.%tp,   verbose=T) 
+dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp,    ph2="ph2.nasal.D"%.%tp,     Wstratum="Wstratum",       wt="wt.nasal.D"%.%tp,    verbose=T) 
+dat_proc = add.wt(dat_proc, ph1="ph1.AB.D"%.%tp, ph2="ph2.AB.D"%.%tp,        Wstratum="Wstratum",       wt="wt.AB.D"%.%tp,       verbose=T)
 
-dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp,    ph2="ph2.immuno",    Wstratum="tps.stratum",    wt="wt.immuno",    verbose=T) 
-dat_proc = add.wt(dat_proc, ph1="ph1.AB.D"%.%tp, ph2="ph2.AB.immuno", Wstratum="tps.stratum",    wt="wt.AB.immuno", verbose=T)
+dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp,    ph2="ph2.sera.immuno",      Wstratum="tps.stratum",    wt="wt.sera.immuno",     verbose=T) 
+dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp,    ph2="ph2.saliva.immuno",    Wstratum="tps.stratum",    wt="wt.sera.immuno",     verbose=T) 
+dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp,    ph2="ph2.nasal.immuno",     Wstratum="tps.stratum",    wt="wt.nasal.immuno",    verbose=T) 
+dat_proc = add.wt(dat_proc, ph1="ph1.AB.D"%.%tp, ph2="ph2.AB.immuno",        Wstratum="tps.stratum",    wt="wt.AB.immuno",       verbose=T)
 }
 
 
@@ -97,6 +111,9 @@ dat_proc = add.wt(dat_proc, ph1="ph1.AB.D"%.%tp, ph2="ph2.AB.immuno", Wstratum="
 
 {
 abmarkers=assays[startsWith(assays,"bind") | startsWith(assays,"pseudo")]
+seramarkers=abmarkers[contain(abmarkers, "_sera")]
+salivamarkers=abmarkers[contain(abmarkers, "_saliva")]
+nasalmarkers=abmarkers[contain(abmarkers, "_nasal")]
 tcellvv=setdiff(assays, abmarkers)
 
 n.imp=1
@@ -154,10 +171,19 @@ for (tp in rev(timepoints)) {
 ###############################################################################
 # 9. add discrete/trichotomized markers
 {
-dat_proc$tmp = with(dat_proc, ph2.D31_7)
-assays1 = abmarkers
-all.markers = c("B"%.%assays1, "Day31"%.%assays1, "Delta31overB"%.%assays1)
-dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D31_7", verbose=F)
+dat_proc$tmp = with(dat_proc, ph2.sera.D31_7)
+all.markers = c("B"%.%seramarkers, "Day31"%.%seramarkers, "Delta31overB"%.%seramarkers)
+dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.sera.D31_7", verbose=F)
+dat_proc$tmp = NULL
+
+dat_proc$tmp = with(dat_proc, ph2.saliva.D31_7)
+all.markers = c("B"%.%salivamarkers, "Day31"%.%salivamarkers, "Delta31overB"%.%salivamarkers)
+dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.saliva.D31_7", verbose=F)
+dat_proc$tmp = NULL
+
+dat_proc$tmp = with(dat_proc, ph2.nasal.D31_7)
+all.markers = c("B"%.%nasalmarkers, "Day31"%.%nasalmarkers, "Delta31overB"%.%nasalmarkers)
+dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.nasal.D31_7", verbose=F)
 dat_proc$tmp = NULL
 
 dat_proc$tmp = with(dat_proc, ph2.AB.D31_7)

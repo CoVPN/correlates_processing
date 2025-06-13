@@ -11,7 +11,7 @@ ows_trial: &ows_trial
 
 
 nextgen_mock: &nextgen_mock
-  mapped_data: /trials/barda/NextGen_mock/analysis/adata/COVID_NextGen_mock_mapped_20250514.csv
+  mapped_data: /trials/barda/NextGen_mock/analysis/adata/COVID_NextGen_mock_mapped_20250605.csv
   assay_metadata: ../correlates_reporting2/assay_metadata/nextgen_mock_assay_metadata.csv
   two_marker_timepoints: no
   timepoints: [31] 
@@ -61,7 +61,7 @@ vat08_combined: &vat08_combined
 
 
 covail: &covail
-  mapped_data: /trials/covpn/COVAILcorrelates/analysis/mapping_immune_correlates/adata/covail_mapped_data_20250520.csv
+  mapped_data: /trials/covpn/COVAILcorrelates/analysis/mapping_immune_correlates/adata/covail_mapped_data_20250611.csv
   assay_metadata: ../correlates_reporting2/assay_metadata/covail_assay_metadata.csv
   two_marker_timepoints: no
   timepoints: [15] # 29 for Sanofi is handled ad hoc 
