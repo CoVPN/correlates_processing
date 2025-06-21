@@ -353,7 +353,7 @@ assertthat::assert_that(
 
 
 {
-# FRNT
+# FRNT B and D15
 
 # impute FRNT50, FRNT80 at B and D15 together.
 # impute different arms and naive/nnaive together, but pass arm and naive as covariates
@@ -396,6 +396,94 @@ assertthat::assert_that(
 
 }
 
+
+
+{
+  # FRNT D91
+  
+  n.imp=1
+  
+  imp.markers=c(outer(c("Day15", "Day91"), frnt, "%.%"))
+  
+  # add arm and naive to the imputation dataset
+  imp.markers =  c(imp.markers, "arm.factor", "naive", "COVIDIndD22toD181")
+  
+  dat.tmp.impute <- subset(dat_proc, get("TwophasesampIndD15.frnt") == 1)
+  
+  imp <- dat.tmp.impute %>% select(all_of(imp.markers))     
+  
+  # there is one -Inf in a FS
+  imp[imp==-Inf]=NA
+  
+  if(any(is.na(imp))) {
+    # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
+    imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
+    dat.tmp.impute[, imp.markers] <- mice::complete(imp, action = 1)
+  }                
+  
+  # missing markers imputed properly?
+  assertthat::assert_that(
+    all(complete.cases(dat.tmp.impute[, imp.markers])),
+    msg = "missing markers imputed properly?"
+  )    
+  
+  # populate dat_proc imp.markers with the imputed values
+  dat_proc[dat_proc[["TwophasesampIndD15.frnt"]]==1, imp.markers] <-
+    dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["TwophasesampIndD15.frnt"]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
+  
+  assertthat::assert_that(
+    all(complete.cases(dat_proc[dat_proc[["TwophasesampIndD15.frnt"]] == 1, imp.markers])),
+    msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
+  )
+  
+}
+
+
+
+{
+  # FRNT D181
+  
+  n.imp=1
+  
+  imp.markers=c(outer(c("Day15", "Day91", "Day181"), frnt, "%.%"))
+  
+  # add arm and naive to the imputation dataset
+  imp.markers =  c(imp.markers, "arm.factor", "naive", "COVIDIndD22toD181")
+  
+  # define a new flag to exclude the 24 ptids with D181 markers
+  dat_proc$Day181frnt_missing_cnt = with(dat_proc, is.na(Day181frnt50_D614G) + is.na(Day181frnt50_BA.1) + is.na(Day181frnt50_BA.2) + is.na(Day181frnt50_BA.4.BA.5) + is.na(Day181frnt80_D614G) + is.na(Day181frnt80_BA.1) + is.na(Day181frnt80_BA.2) + is.na(Day181frnt80_BA.4.BA.5) )
+  dat_proc$TwophasesampIndD181.frnt = dat_proc$TwophasesampIndD15.frnt & !(dat_proc$Day181frnt_missing_cnt==8 & (dat_proc$COVIDIndD92toD181 == 0 & !is.na(dat_proc$COVIDIndD92toD181)))
+  dat_proc$ph2.D181.frnt = dat_proc$ph2.D15.frnt & dat_proc$TwophasesampIndD181.frnt
+  
+  dat.tmp.impute <- subset(dat_proc, get("TwophasesampIndD181.frnt") == 1)
+  
+  imp <- dat.tmp.impute %>% select(all_of(imp.markers))     
+  
+  # there is one -Inf in a FS
+  imp[imp==-Inf]=NA
+  
+  if(any(is.na(imp))) {
+    # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
+    imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
+    dat.tmp.impute[, imp.markers] <- mice::complete(imp, action = 1)
+  }                
+  
+  # missing markers imputed properly?
+  assertthat::assert_that(
+    all(complete.cases(dat.tmp.impute[, imp.markers])),
+    msg = "missing markers imputed properly?"
+  )    
+  
+  # populate dat_proc imp.markers with the imputed values
+  dat_proc[dat_proc[["TwophasesampIndD181.frnt"]]==1, imp.markers] <-
+    dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["TwophasesampIndD181.frnt"]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
+  
+  assertthat::assert_that(
+    all(complete.cases(dat_proc[dat_proc[["TwophasesampIndD181.frnt"]] == 1, imp.markers])),
+    msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
+  )
+  
+}
 
 
 
