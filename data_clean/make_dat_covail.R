@@ -450,7 +450,7 @@ assertthat::assert_that(
   # add arm and naive to the imputation dataset
   imp.markers =  c(imp.markers, "arm.factor", "naive", "COVIDIndD22toD181")
   
-  # define a new flag to exclude the 24 ptids with D181 markers
+  # define a new flag to exclude the 24 ptids without the D181 markers
   dat_proc$Day181frnt_missing_cnt = with(dat_proc, is.na(Day181frnt50_D614G) + is.na(Day181frnt50_BA.1) + is.na(Day181frnt50_BA.2) + is.na(Day181frnt50_BA.4.BA.5) + is.na(Day181frnt80_D614G) + is.na(Day181frnt80_BA.1) + is.na(Day181frnt80_BA.2) + is.na(Day181frnt80_BA.4.BA.5) )
   dat_proc$TwophasesampIndD181.frnt = dat_proc$TwophasesampIndD15.frnt & !(dat_proc$Day181frnt_missing_cnt==8 & (dat_proc$COVIDIndD92toD181 == 0 & !is.na(dat_proc$COVIDIndD92toD181)))
   dat_proc$ph2.D181.frnt = dat_proc$ph2.D15.frnt & dat_proc$TwophasesampIndD181.frnt
@@ -659,8 +659,61 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 ###############################################################################
 # special handling 
 
+# create an indicator SubcohortInd.casedeletion for immunogenicity studies
 
+# loop through naive/nnaive, arm
+todelete=c()
+for (i in 1:2) {
+  if (i==1) dat=subset(dat_proc, naive==1 & ph1.D15.tcell) # Naive
+  if (i==2) dat=subset(dat_proc, naive==0 & ph1.D15.tcell) # NN
+  
+  dat$casep = dat$case.period
+  dat$casep[is.na(dat$case.period)] = 3
+  dat$casep = factor(dat$casep, c(1,2,3))
+  
+  arms=unique(dat$arm)
+  for (a in arms) {
+    dat.1=subset(dat, arm==a)
+    
+    tab = mytable(dat.1$ph2.D15.tcell, dat.1$casep); tab
+    # sampling ratios among booster proximal cases, booster distal cases, controls; could be NaN, if so, set to 0
+    p.case.prox = tab[2,"1"]/sum(tab[,"1"]); if (is.nan(p.case.prox)) p.case.prox=0
+    p.case.dist = tab[2,"2"]/sum(tab[,"2"]); if (is.nan(p.case.dist)) p.case.dist=0
+    p.ctrl      = tab[2,"3"]/sum(tab[,"3"])
+    c(p.case.prox, p.case.dist, p.ctrl)
+    
+    # delete proximal cases 
+    if (p.case.prox>p.ctrl) {
+      n=round(sum(tab[,"1"]) * p.ctrl)
+      N=tab[2,"1"]
+      if(n<N) {
+        ptids = subset(dat.1, casep==1 & ph2.D15.tcell, Ptid, drop=T)
+        stopifnot(len(ptids)==N)
+        todelete = c(todelete, sample(ptids, N-n))
+      }
+    }
+    
+    # delete distal cases 
+    if (p.case.dist>p.ctrl) {
+      n=round(sum(tab[,"2"]) * p.ctrl)
+      N=tab[2,"2"]
+      if(n<N) {
+        ptids = subset(dat.1, casep==2 & ph2.D15.tcell, Ptid, drop=T)
+        stopifnot(len(ptids)==N)
+        todelete = c(todelete, sample(ptids, N-n))
+      }
+    }
+  }
+  print(len(todelete))
+}
 
+dat_proc$SubcohortInd.casedeletion = dat_proc$ph2.D15.tcell # T/F
+dat_proc$SubcohortInd.casedeletion[dat_proc$Ptid %in% todelete] = F
+
+# validation
+dat.tmp=dat_proc[dat_proc$ph1.D15.tcell==1,]
+mytable(dat.tmp$ph2.D15.tcell, dat.tmp$COVIDIndD22toD181, dat.tmp$naive)
+mytable(dat.tmp$SubcohortInd.casedeletion, dat.tmp$COVIDIndD22toD181, dat.tmp$naive)
 
 
 ###############################################################################
