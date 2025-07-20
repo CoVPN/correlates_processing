@@ -11,7 +11,7 @@ ows_trial: &ows_trial
 
 
 nextgen_mock: &nextgen_mock
-  mapped_data: /trials/barda/NextGen_mock/analysis/adata/COVID_NextGen_mock_mapped_20250605.csv
+  mapped_data: /trials/barda/NextGen_mock/analysis/adata/COVID_NextGen_mock_mapped_20250716.csv
   assay_metadata: ../correlates_reporting2/assay_metadata/nextgen_mock_assay_metadata.csv
   two_marker_timepoints: no
   timepoints: [31] 
@@ -304,3 +304,22 @@ profiscov_lvmn: &profiscov_lvmn
   assay_labels_short: [Live Virus-mnAb ID50 (IU50/ml)]
 
   
+iliad_ib202p: &iliad_ib202p
+  mapped_data: /trials/iliad/ib_202p/analysis/adata/iliad_ib202p_20250715.csv
+  assay_metadata: ../correlates_reporting2/assay_metadata/iliad_ib202p_assay_metadata.csv
+  two_marker_timepoints: no
+  timepoints: [28] 
+  times: [B, Day28, Delta28overB]
+  time_labels: [Day 1, Day 28, D28 fold-rise over D1]
+  study_name: ILiAD_IB202P
+  
+iliad_ib201p: &iliad_ib201p
+  mapped_data: /trials/iliad/ib_201p/analysis/adata/iliad_ib201p_20250717.csv
+  assay_metadata: ../correlates_reporting2/assay_metadata/iliad_ib201p_assay_metadata.csv
+  two_marker_timepoints: no
+  timepoints: [28] 
+  times: [B, Day28, Delta28overB]
+  time_labels: [Day 1, Day 28, D28 fold-rise over D1]
+  study_name: ILiAD_IB201P
+
+

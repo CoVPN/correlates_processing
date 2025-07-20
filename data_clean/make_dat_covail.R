@@ -185,7 +185,7 @@ dat_proc$case.period[dat_proc$COVIDIndD22toD91 ==1]=1
 
 with(dat_proc[dat_proc$ph1.D15.tcell==1,], mytable(case.period, TwophasesampIndD15.tcell))
 
-# use TwophasesampIndD15.tcell for both 
+# use TwophasesampIndD15.tcell for both time points
 for (tp in c(15,92)) {
   dat_proc[["ph2.D"%.%tp%.%".tcell"]] = dat_proc[["ph1.D"%.%tp%.%".tcell"]] & dat_proc[["TwophasesampIndD15.tcell"]]
   # 6/12/25 bug fix: Wstratum => Wstratum.tcell
