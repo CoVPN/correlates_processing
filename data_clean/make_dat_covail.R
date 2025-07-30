@@ -795,6 +795,8 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 ###############################################################################
 # 11. special handling 
 
+
+###############################################################################
 # create an indicator SubcohortInd.casedeletion for immunogenicity studies
 
 # loop through naive/nnaive, arm
@@ -853,49 +855,107 @@ mytable(dat.tmp$SubcohortInd.casedeletion, dat.tmp$COVIDIndD22toD181, dat.tmp$na
 
 
 
-{
-  # impute FRNT50 and FRNT80 at B and D15 for the 3 ptids in ph2.D15.xassays but not in ph2.D15.frnt
+###############################################################################
+# impute FRNT50 and FRNT80 at B and D15 for the 3 ptids in ph2.D15.xassays but not in ph2.D15.frnt
+
+# impute FRNT50, FRNT80 at B and D15 together.
+# impute different arms and naive/nnaive together, but pass arm and naive as covariates
+
+n.imp=1
+tp=15
+
+imp.markers=c(outer(c("B", "Day"%.%tp), c(frnt, nAb), "%.%"))
+
+# add arm and naive to the imputation dataset
+imp.markers =  c(imp.markers, "arm.factor", "naive")
+
+dat.tmp.impute <- subset(dat_proc, get("ph2.D15.xassays") == 1)
+
+imp <- dat.tmp.impute %>% select(all_of(imp.markers))     
+
+# there is one -Inf in a FS
+imp[imp==-Inf]=NA
+
+if(any(is.na(imp))) {
+  # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
+  imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
+  dat.tmp.impute[, imp.markers] <- mice::complete(imp, action = 1)
+}                
+
+# missing markers imputed properly?
+assertthat::assert_that(
+  all(complete.cases(dat.tmp.impute[, imp.markers])),
+  msg = "missing markers imputed properly?"
+)    
+
+# populate dat_proc imp.markers with the imputed values
+dat_proc[dat_proc[["ph2.D15.xassays"]]==1, imp.markers] <-
+  dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["ph2.D15.xassays"]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
+
+assertthat::assert_that(
+  all(complete.cases(dat_proc[dat_proc[["ph2.D15.xassays"]] == 1, imp.markers])),
+  msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
+)
   
-  # impute FRNT50, FRNT80 at B and D15 together.
-  # impute different arms and naive/nnaive together, but pass arm and naive as covariates
-  
-  n.imp=1
-  tp=15
-  
-  imp.markers=c(outer(c("B", "Day"%.%tp), c(frnt, nAb), "%.%"))
-  
-  # add arm and naive to the imputation dataset
-  imp.markers =  c(imp.markers, "arm.factor", "naive")
-  
-  dat.tmp.impute <- subset(dat_proc, get("ph2.D15.xassays") == 1)
-  
-  imp <- dat.tmp.impute %>% select(all_of(imp.markers))     
-  
-  # there is one -Inf in a FS
-  imp[imp==-Inf]=NA
-  
-  if(any(is.na(imp))) {
-    # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
-    imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
-    dat.tmp.impute[, imp.markers] <- mice::complete(imp, action = 1)
-  }                
-  
-  # missing markers imputed properly?
-  assertthat::assert_that(
-    all(complete.cases(dat.tmp.impute[, imp.markers])),
-    msg = "missing markers imputed properly?"
-  )    
-  
-  # populate dat_proc imp.markers with the imputed values
-  dat_proc[dat_proc[["ph2.D15.xassays"]]==1, imp.markers] <-
-    dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["ph2.D15.xassays"]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
-  
-  assertthat::assert_that(
-    all(complete.cases(dat_proc[dat_proc[["ph2.D15.xassays"]] == 1, imp.markers])),
-    msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
-  )
-  
-}
+
+
+###############################################################################
+# add NLPC1 made from fsdam
+tmp=read.csv("../covail_xassays_NLPC1.csv")
+dat_proc$Day15seven_PC1_NLPC1 = tmp$Day15seven_PC1_NLPC1 [match(dat_proc$Ptid, tmp$Ptid)]
+dat_proc$Bseven_PC1_N_NLPC1   = tmp$Bseven_PC1_N_NLPC1   [match(dat_proc$Ptid, tmp$Ptid)]
+
+
+###############################################################################
+# impute _vacresp 
+
+n.imp=1
+tp=15
+
+imp.markers=names(dat_proc)
+imp.markers = imp.markers[contain(imp.markers,"_vacresp")]
+print(imp.markers)
+
+dat.tmp.impute <- subset(dat_proc, get("TwophasesampIndD15.tcell") == 1)
+
+for (a in imp.markers) {
+  kp = is.na(dat.tmp.impute[[a]])
+  if (any(kp)) {
+    amarker = sub('_vacresp','',a)
+    amarker = sub("Day15","",amarker)
+    f=as.formula(glue("{a} ~ B{amarker} + Day15{amarker} + arm.factor + naive"))
+    fit = glm(f, dat.tmp.impute, family=binomial)
+    dat.tmp.impute[[a]][kp] = rbinom(sum(kp), 1, prob=predict(fit, dat.tmp.impute[kp,], type="response"))
+  } else next
+}  
+
+# missing markers imputed properly?
+assertthat::assert_that(
+  all(complete.cases(dat.tmp.impute[, imp.markers])),
+  msg = "missing markers imputed properly?"
+)    
+
+# populate dat_proc imp.markers with the imputed values
+dat_proc[dat_proc[["TwophasesampIndD15.tcell"]]==1, imp.markers] <-
+  dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["TwophasesampIndD15.tcell"]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
+
+assertthat::assert_that(
+  all(complete.cases(dat_proc[dat_proc[["TwophasesampIndD15.tcell"]] == 1, imp.markers])),
+  msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
+)
+
+
+###############################################################################
+# correct FRNT values???
+
+# vv=names(dat_proc)
+# vv=vv[contain(vv, "frnt") & contain(vv, "_")]
+# vv=vv[!endsWith(vv,"cat") & !startsWith(vv,"Delta")]
+# vv=setdiff(vv, "Day181frnt_missing_cnt")
+# 
+# sapply (vv, function(a) sum(dat_proc[[a]]<log10(20) & dat_proc[[a]]>1, na.rm=T))
+# sapply (vv, function(a) min(dat_proc[[a]], na.rm=T))
+
 
 ###############################################################################
 # digest check

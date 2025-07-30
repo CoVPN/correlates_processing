@@ -1,0 +1,266 @@
+---
+title: "FS-DAM"
+output: html_document
+date: "2025-07-24"
+---
+
+```{r setup, include=FALSE}
+library(FSDAM)
+library(kyotil)
+library(glue)
+library(mdw)
+options(max.print=1e5)
+```
+
+# PC1 markers
+
+```{r}
+
+TRIAL="covail_xassays"
+config.reporting  <- config::get(config = TRIAL, file="I:/correlates_reporting2/config.yml") 
+dat_proc=read.csv(sub("/trials", "T:", config.reporting$data_cleaned))
+
+dat.ph2.xassays=dat_proc[dat_proc$ph2.D15.xassays==1,]
+
+
+assay_metadata = read.csv("I:/correlates_reporting2/assay_metadata/covail_assay_metadata.csv")
+assays = unique(assay_metadata$assay)
+  
+marker_sets = c("fc_spike", "fc_N", "bAb_spike", "bAb_N", "cd4_spike", "cd8_spike")
+
+seven_PC1 = c('pseudoneutid50',marker_sets) %.% "_PC1"
+seven_MDW = c('pseudoneutid50',marker_sets) %.% "_MDW"
+seven_PC1 = seven_PC1[!contain(seven_PC1, "_N_")]
+seven_MDW = seven_MDW[!contain(seven_MDW, "_N_")]
+
+seven_PC1_N = c(c('pseudoneutid50',marker_sets) %.% "_PC1", "cd4_IFNg.IL2_Wuhan.N")
+seven_MDW_N = c(c('pseudoneutid50',marker_sets) %.% "_MDW", "cd4_IFNg.IL2_Wuhan.N")
+
+  
+```
+
+
+```{r}
+# repeat for {B, Day15} x {naive, nnaive}
+FD1 = list()
+for (iter in 1:4) {
+  
+  if (iter==1) {
+    markers_data = dat.ph2.xassays[dat.ph2.xassays$naive==0, glue("Day15{seven_PC1}")]
+    ptids = dat.ph2.xassays[dat.ph2.xassays$naive==0, "Ptid"]
+  } else if (iter==2) {
+    markers_data = dat.ph2.xassays[dat.ph2.xassays$naive==0, glue("B{seven_PC1_N}")]
+    ptids = dat.ph2.xassays[dat.ph2.xassays$naive==0, "Ptid"]
+  } else if (iter==3) {
+    markers_data = dat.ph2.xassays[dat.ph2.xassays$naive==1, glue("Day15{seven_PC1}")]
+    ptids = dat.ph2.xassays[dat.ph2.xassays$naive==1, "Ptid"]
+  } else if (iter==4) {
+    markers_data = dat.ph2.xassays[dat.ph2.xassays$naive==1, glue("B{seven_PC1_N}")]
+    ptids = dat.ph2.xassays[dat.ph2.xassays$naive==1, "Ptid"]
+  }  
+  
+  
+  markers_data = scale(markers_data, center=TRUE, scale=TRUE)
+  print (dim(markers_data))
+  
+  par(mfrow=c(2, 2))
+  
+  # clustering of markers
+  par(mar=c(10, 4, 4, 1))
+  w=tree.weight(cor(markers_data), orientation='vertical', label.cex=.5)
+  par(mar=c(5.1, 4.1, 4.1, 2.1))
+  
+  pca=prcomp(markers_data, center=TRUE, scale=TRUE)
+  # plot(pca, main="PCA Scree Plot")
+  # Variance explained by each PC
+  pca_variance <- pca$sdev^2
+  # Proportion of variance
+  pve <- pca_variance / sum(pca_variance)
+  # Cumulative PVE
+  cum_pve <- cumsum(pve)
+  print(cum_pve)
+  
+  fit=fsdam(markers_data, opt_numCode=ncol(markers_data), verbose=F, opt_k=100)
+  # str(fit)
+  
+  plot(fit,which="mse", ylim=c(0,1))
+  lines(1-cum_pve, col="red", lwd=1)
+  mylegend(x=3, legend=c("FS-DAM", "PCA"), col=c("black", "red"), lty=c(1, 1), lwd=c(1, 1), cex=0.8)
+  
+  # plot(fit,which="history")
+  print(1-fit$mse)
+  
+  codes = fit$code
+  cor(codes)
+  vars = sapply(1:ncol(codes), function(k) {
+    cors = sapply(1:ncol(markers_data), function(i) cor(codes[,k], markers_data[,i]))
+    # print(sort(cors))
+    print(max(abs(cors)))
+    colnames(markers_data)[which.max(abs(cors))]
+  })
+  
+  plot(markers_data[,vars[1]], codes[,1], xlab=vars[1], ylab="NLPC1", main="")
+  
+  FD1[[iter]] = data.frame(
+    ptid = ptids,
+    FD1=codes[,1]
+  )
+  
+}
+
+```
+
+```{r}
+tmp = rbind(FD1[[1]], FD1[[3]])
+tmp2 = rbind(FD1[[2]], FD1[[4]])
+tosave = cbind(tmp, tmp2[,2])
+colnames(tosave) = c("Ptid", "Day15seven_PC1_NLPC1", "Bseven_PC1_N_NLPC1")
+mywrite.csv(tosave, file="I:/covail_xassays_NLPC1")
+```
+
+
+
+# All markers
+
+```{r}
+# dat=read.csv("T:/covpn/COVAILcorrelates/analysis/correlates/adata/covail_data_processed_20250709.csv")
+# 
+
+# assay metadata needs to be selected
+
+# assay_metadata = read.csv("D:/Covid19/correlates_reporting2-2/assay_metadata/covail_assay_metadata.csv")
+# assays = unique(assay_metadata$assay)
+# 
+# dat.ph2.tcell=dat[dat$ph2.D15.tcell==1,]
+# 
+# # remove assays that contain frnt
+# assays = assays[!grepl("frnt", assays)]
+# # remove assays that contain pseudoneutid50Duke_BA.2.12.1
+# assays = assays[!grepl("pseudoneutid50Duke_BA.2.12.1", assays)]
+
+```
+
+
+```{r first_try}
+# markers_data = dat.ph2.tcell[,c(glue("B{assays}"), glue("Day15{assays}"))]
+# markers_data = scale(markers_data, center=TRUE, scale=TRUE)
+# # summary(markers_data)
+# 
+# # print columns with NA
+# na_columns = colnames(markers_data)[colSums(is.na(markers_data)) > 0]
+# if (length(na_columns) > 0) {
+#   cat("Columns with NA values:\n")
+#   print(na_columns)
+# } else {
+#   cat("No columns with NA values.\n")
+# }
+# 
+# dim(markers_data)
+# 
+# par(mar=c(13, 4, 4, 1))
+# w=tree.weight(cor(markers_data), orientation='vertical', label.cex=0.3)
+
+```
+
+
+```{r}
+# fit=fsdam(markers_data, opt_numCode=10, verbose=F)
+# 
+# str(fit)
+# plot(fit,which="mse", ylim=c(0,1))
+# plot(fit,which="history")
+# 
+# codes = fit$code
+# cor(codes)
+# sapply(1:ncol(codes), function(k) {
+#   cors = sapply(1:ncol(markers_data), function(i) cor(codes[,k], markers_data[,i]))
+#   # print(sort(cors))
+#   print(max(abs(cors)))
+#   colnames(markers_data)[which.max(abs(cors))]
+# })
+
+```
+
+
+```{r second_try}
+# subset to first 12 arms, which are stage 1 and 2
+
+# markers_data = dat.ph2.tcell[dat.ph2.tcell$arm <= 12, c(glue("B{assays}"), glue("Day15{assays}"))]
+# markers_data = scale(markers_data, center=TRUE, scale=TRUE)
+# # summary(markers_data)
+# 
+# # print columns with NA
+# na_columns = colnames(markers_data)[colSums(is.na(markers_data)) > 0]
+# if (length(na_columns) > 0) {
+#   cat("Columns with NA values:\n")
+#   print(na_columns)
+# } else {
+#   cat("No columns with NA values.\n")
+# }
+# 
+# dim(markers_data)
+# 
+# par(mar=c(13, 4, 4, 1))
+# w=tree.weight(cor(markers_data), orientation='vertical', label.cex=0.3)
+
+```
+
+```{r}
+# fit=fsdam(markers_data, opt_numCode=10, verbose=F, opt_k=500)
+# # str(fit)
+# plot(fit,which="mse", ylim=c(0,1))
+# plot(fit,which="history")
+# 
+# codes = fit$code
+# cor(codes)
+# sapply(1:ncol(codes), function(k) {
+#   cors = sapply(1:ncol(markers_data), function(i) cor(codes[,k], markers_data[,i]))
+#   # print(sort(cors))
+#   print(max(abs(cors)))
+#   colnames(markers_data)[which.max(abs(cors))]
+# })
+
+```
+
+
+```{r third_try}
+# further subset to naive
+
+# markers_data = dat.ph2.tcell[dat.ph2.tcell$arm <= 12 & dat.ph2.tcell$naive==1, c(glue("B{assays}"), glue("Day15{assays}"))]
+# markers_data = scale(markers_data, center=TRUE, scale=TRUE)
+# # summary(markers_data)
+# 
+# # print columns with NA
+# na_columns = colnames(markers_data)[colSums(is.na(markers_data)) > 0]
+# if (length(na_columns) > 0) {
+#   cat("Columns with NA values:\n")
+#   print(na_columns)
+# } else {
+#   cat("No columns with NA values.\n")
+# }
+# 
+# dim(markers_data)
+# 
+# par(mar=c(13, 4, 4, 1))
+# w=tree.weight(cor(markers_data), orientation='vertical', label.cex=0.3)
+
+```
+
+```{r}
+# fit=fsdam(markers_data, opt_numCode=10, verbose=F, opt_k=500)
+# # str(fit)
+# plot(fit,which="mse", ylim=c(0,1))
+# plot(fit,which="history")
+# 
+# codes = fit$code
+# cor(codes)
+# sapply(1:ncol(codes), function(k) {
+#   cors = sapply(1:ncol(markers_data), function(i) cor(codes[,k], markers_data[,i]))
+#   # print(sort(cors))
+#   print(max(abs(cors)))
+#   colnames(markers_data)[which.max(abs(cors))]
+# })
+
+```
+
+
