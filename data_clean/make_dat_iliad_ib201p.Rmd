@@ -1,0 +1,170 @@
+---
+title: "Covail Modeling"
+output: html_document
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = dirname(dirname(normalizePath(knitr::current_input()))) )
+
+Sys.setenv(TRIAL = "iliad_ib201p")
+source(here::here("_common.R"))
+
+# no need to run renv::activate(here::here()) b/c .Rprofile exists
+
+library(tidyverse)
+library(glue)
+library(Hmisc) # wtd.quantile, cut2
+library(mice)
+library(dplyr)
+library(here)
+library(mdw)
+
+begin=Sys.time()
+```
+
+```{r read_data}
+# 1. read mapped data 
+dat_raw = read.csv(mapped_data)
+dat_proc = preprocess(dat_raw, study_name)   
+names(dat_proc)[[1]]="Ptid"
+
+dat_proc$Trt = "BPZE1_PBO"
+dat_proc$Trt[dat_proc$Trt01==1] = "BPZE1_BXY"
+dat_proc$Trt[dat_proc$Trt01==2] = "PBO_BXY"
+dat_proc$Trt = as.factor(dat_proc$Trt)
+mytable(dat_proc$Trt)
+
+# this line may not run in Rmd b/c of working dir, but it should run in console
+assay_metadata = read.csv(config$assay_metadata)
+assays=assay_metadata$assay
+```
+
+
+```{r}
+# 2. define Senior and race/ethnicity
+
+```
+
+
+```{r}
+# 3. stratum variables
+dat_proc$Bstratum = 1 # there are no demographics stratum for subcohort sampling
+names(Bstratum.labels) <- Bstratum.labels
+  
+dat_proc$demo.stratum = 1 # # there are no demographics stratum for subcohort sampling
+
+# Stratum 1-17 nnaive, 51-67 naive
+dat_proc <- dat_proc %>% mutate(tps.stratum = Trt)
+
+dat_proc$Wstratum = dat_proc$tps.stratum
+
+```
+
+```{r}
+# 4. Define ph1, ph2, and weights
+
+# the whole cohort is treated as ph1 and ph2
+dat_proc$TwophasesampIndC0 <- dat_proc$ph1.C0 <- 1
+
+dat_proc[["ph2.C0"]]=dat_proc$ph1.C0
+dat_proc[["wt.C0"]] = 1
+
+```
+
+
+```{r}
+# 5. impute missing biomarkers in ph2 (assay imputation)
+
+# show the pattern of missingness
+aa=c(glue("B{assays}"), glue("Day28{assays}"))
+cat("nrow x ncol: ", dim(dat_proc[aa]), "\n\n")
+cnts = sapply(dat_proc[aa], function(x) c(BPZE1_PBO=sum(is.na(x[dat_proc$Trt=="BPZE1_PBO"])), 
+                                          BPZE1_BXY=sum(is.na(x[dat_proc$Trt=="BPZE1_BXY"])),
+                                          PBO_BXY  =sum(is.na(x[dat_proc$Trt=="PBO_BXY"]))))
+cat("Number of missing measurements by treatment arm \n")
+cnts[,colSums(cnts)!=0]
+```
+
+
+```{r}
+# 6. transformation of the markers
+```
+
+
+```{r}
+# 7. add mdw scores for nAb
+```
+
+
+```{r}
+# 8. add fold change markers
+# assuming data has been censored at the lower limit
+# thus no need to do, say, lloq censoring
+# but there is a need to do uloq censoring before computing delta
+assays1=assays
+
+tmp=list()
+for (a in assays1) {
+  for (t in c("B", paste0("Day", config$timepoints)) ) {
+    tmp[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] > log10(uloqs[marker.name.to.assay(t %.% a)]), log10(uloqs[marker.name.to.assay(t %.% a)]), dat_proc[[t %.% a]])
+  }
+}
+tmp=as.data.frame(tmp) # cannot subtract list from list, but can subtract data frame from data frame
+
+for (tp in rev(timepoints)) {
+  dat_proc["Delta"%.%tp%.%"overB" %.% assays1] <- tmp["Day"%.%tp %.% assays1] - tmp["B" %.% assays1]
+}   
+
+if(two_marker_timepoints) {
+  dat_proc["Delta"%.%timepoints[2]%.%"over"%.%timepoints[1] %.% assays1] <- tmp["Day"%.% timepoints[2]%.% assays1] - tmp["Day"%.%timepoints[1] %.% assays1]
+}
+
+# print the fold change variables added
+cat("Fold change markers added:\n\n")
+vv = names(dat_proc)
+summary(dat_proc[vv[startsWith(vv,"Delta")]])
+
+# summary(dat_proc[c("BFHA_Norm_Nasal_IgA","Day28FHA_Norm_Nasal_IgA","Delta28overBFHA_Norm_Nasal_IgA")])
+
+```
+
+
+```{r}
+# 9. add discrete/trichotomized markers
+
+dat_proc$tmp = with(dat_proc, ph2.C0) 
+assays1=assays
+all.markers = c("B"%.%assays1, "Day28"%.%assays1, "Delta28overB"%.%assays1)
+dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.C0", verbose=T)
+
+```
+
+
+```{r}
+# 10. impute covariates if necessary
+```
+
+
+```{r}
+# special handling 
+```
+
+
+```{r}
+# digest check
+library(digest)
+if(Sys.getenv ("NOCHECK")=="") {    
+    tmp = switch(TRIAL,
+         covail = "cc1fc791c8e384ba9b1c96790da26930",
+         NA)    
+    if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, 
+      msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ---------------')   
+}
+
+if (!dir.exists("data_clean/csv")) dir.create("data_clean/csv")
+data_name = paste0(TRIAL, "_data_processed_", format(Sys.Date(), "%Y%m%d"), ".csv")
+write_csv(dat_proc, file = here("data_clean", "csv", data_name))
+
+print("run time: "%.%format(Sys.time()-begin, digits=1))
+
+```

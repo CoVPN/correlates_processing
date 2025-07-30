@@ -11,6 +11,7 @@
 nohup.out
 _book
 _main.Rmd
+covail_fd1.csv
 _bookdown_files
 packages.bib
 data_clean/csv/*

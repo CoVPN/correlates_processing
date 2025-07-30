@@ -306,7 +306,7 @@ profiscov_lvmn: &profiscov_lvmn
   
 ################################################################################
 iliad_ib202p: &iliad_ib202p
-  mapped_data: /trials/iliad/ib_202p/analysis/adata/iliad_ib202p_20250722.csv
+  mapped_data: /trials/iliad/ib_202p/analysis/mapping_immune_correlates/adata/iliad_ib202p_mapped_20250730.csv
   assay_metadata: ../correlates_reporting2/assay_metadata/iliad_ib202p_assay_metadata.csv
   two_marker_timepoints: no
   timepoints: [28] 
@@ -315,7 +315,7 @@ iliad_ib202p: &iliad_ib202p
   study_name: ILiAD_IB202P
   
 iliad_ib201p: &iliad_ib201p
-  mapped_data: /trials/iliad/ib_201p/analysis/adata/iliad_ib201p_20250722.csv
+  mapped_data: /trials/iliad/ib_201p/analysis/mapping_immune_correlates/adata/iliad_ib201p_mapped_20250730.csv
   assay_metadata: ../correlates_reporting2/assay_metadata/iliad_ib201p_assay_metadata.csv
   two_marker_timepoints: no
   timepoints: [28] 

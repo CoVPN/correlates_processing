@@ -34,6 +34,8 @@ deploy_path <- switch(study_name,
                       IARC_HPV = "/networks/cavd/Objective 4/GH-VAP/ID27-Sankaranarayanan/analysis/correlates/adata/",
                       COVAIL =    "/trials/covpn/COVAILcorrelates/analysis/correlates/adata/",
                       NVX_UK302 =    "/trials/covpn/p3004/analysis/correlates/UK302/adata/",
+                      ILiAD_IB202P =    "/trials/iliad/ib_202p/analysis/correlates/adata/",
+                      ILiAD_IB201P =    "/trials/iliad/ib_201p/analysis/correlates/adata/",
                       deploy_path
                       )  
 

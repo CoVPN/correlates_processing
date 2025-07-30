@@ -9,13 +9,14 @@ endif
 
 
 risk_analysis:  
-ifeq ($(TRIAL),$(filter $(TRIAL), id27hpv covail nvx_uk302 prevent19_stage2 azd1222_stage2 nextgen_mock))
+ifeq ($(TRIAL),$(filter $(TRIAL), id27hpv covail nvx_uk302 prevent19_stage2 azd1222_stage2 nextgen_mock iliad_ib202p iliad_ib201p))
 else
 	$(MAKE) -k -C riskscore_baseline all
 endif
 
 
 TARGET_FILE := data_clean/make_dat_$(TRIAL).R
+TARGET_RMD := data_clean/make_dat_$(TRIAL).Rmd
 
 
 # put target file second to last 
@@ -26,6 +27,8 @@ ifeq ($(TRIAL),$(filter $(TRIAL), vat08_combined))
 else ifeq ($(TRIAL),$(filter $(TRIAL), janssen_partA_VL))
 	Rscript data_clean/RunhotdeckMI_janssen_partA_VL.R
 	Rscript data_clean/make_dat_proc.R
+else ifneq ($(wildcard $(TARGET_RMD)),)
+	Rscript -e "rmarkdown::render('$(TARGET_RMD)')"
 else ifneq ($(wildcard $(TARGET_FILE)),)
 	Rscript $(TARGET_FILE)
 else 
