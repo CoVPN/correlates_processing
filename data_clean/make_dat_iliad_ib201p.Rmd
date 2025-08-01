@@ -29,8 +29,8 @@ dat_proc = preprocess(dat_raw, study_name)
 names(dat_proc)[[1]]="Ptid"
 
 dat_proc$Trt = "BPZE1_PBO"
-dat_proc$Trt[dat_proc$Trt01==1] = "BPZE1_BXY"
-dat_proc$Trt[dat_proc$Trt01==2] = "PBO_BXY"
+dat_proc$Trt[dat_proc$Trt01==1] = "BPZE1_Tdap"
+dat_proc$Trt[dat_proc$Trt01==2] = "PBO_Tdap"
 dat_proc$Trt = as.factor(dat_proc$Trt)
 mytable(dat_proc$Trt)
 

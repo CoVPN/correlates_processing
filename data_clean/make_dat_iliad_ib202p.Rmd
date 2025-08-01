@@ -28,6 +28,10 @@ dat_raw = read.csv(mapped_data)
 dat_proc = preprocess(dat_raw, study_name)   
 names(dat_proc)[[1]]="Ptid"
 
+dat_proc$Trt[dat_proc$Trt==1] = "BPZE1"
+dat_proc$Trt[dat_proc$Trt==0] = "PBO"
+dat_proc$Trt = as.factor(dat_proc$Trt)
+
 assay_metadata = read.csv(config$assay_metadata)
 assays=assay_metadata$assay
 ```
@@ -72,6 +76,8 @@ dat_proc[["wt.C0"]] = 1
 
 ```{r}
 # 5. impute missing biomarkers in ph2 (assay imputation)
+
+cat("Note that sIgA is not measured at baseline in IB-202p and the measurements taken at screening is used to fill in.")
 
 # show the pattern of missingness
 aa=c(glue("B{assays}"), glue("Day28{assays}"))
