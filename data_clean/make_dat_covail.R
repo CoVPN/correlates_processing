@@ -796,8 +796,7 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 # 11. special handling 
 
 
-###############################################################################
-# create an indicator SubcohortInd.casedeletion for immunogenicity studies
+#### create an indicator SubcohortInd.casedeletion for immunogenicity studies
 
 # loop through naive/nnaive, arm
 todelete=c()
@@ -855,8 +854,7 @@ mytable(dat.tmp$SubcohortInd.casedeletion, dat.tmp$COVIDIndD22toD181, dat.tmp$na
 
 
 
-###############################################################################
-# impute FRNT50 and FRNT80 at B and D15 for the 3 ptids in ph2.D15.xassays but not in ph2.D15.frnt
+#### impute FRNT50 and FRNT80 at B and D15 for the 3 ptids in ph2.D15.xassays but not in ph2.D15.frnt
 
 # impute FRNT50, FRNT80 at B and D15 together.
 # impute different arms and naive/nnaive together, but pass arm and naive as covariates
@@ -897,17 +895,22 @@ assertthat::assert_that(
   msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
 )
   
+# add the corresponding fold change markers
+mytable(dat_proc$Delta15overBfrnt50_BA.1 == dat_proc$Day15frnt50_BA.1 - dat_proc$Bfrnt50_BA.1)
+dat_proc$Delta15overBfrnt50_BA.1 = dat_proc$Day15frnt50_BA.1 - dat_proc$Bfrnt50_BA.1
+mytable(dat_proc$Delta15overBfrnt50_BA.1 == dat_proc$Day15frnt50_BA.1 - dat_proc$Bfrnt50_BA.1)
+# the table after the operation sees 3 more values of delta
 
 
-###############################################################################
-# add NLPC1 made from fsdam
+#### add NLPC1 made from fsdam
+
 tmp=read.csv("../covail_xassays_NLPC1.csv")
 dat_proc$Day15seven_PC1_NLPC1 = tmp$Day15seven_PC1_NLPC1 [match(dat_proc$Ptid, tmp$Ptid)]
 dat_proc$Bseven_PC1_N_NLPC1   = tmp$Bseven_PC1_N_NLPC1   [match(dat_proc$Ptid, tmp$Ptid)]
 
 
-###############################################################################
-# impute _vacresp 
+
+#### impute T cell _vacresp markers
 
 n.imp=1
 tp=15
@@ -945,7 +948,6 @@ assertthat::assert_that(
 )
 
 
-###############################################################################
 # correct FRNT values???
 
 # vv=names(dat_proc)
@@ -963,7 +965,7 @@ assertthat::assert_that(
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         covail = "6c3af2d567c31ae4ac653f336b6437d3",
+         covail = "1b78c30d75ae006b327846ef7f588a71",
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, 
       msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
