@@ -505,7 +505,7 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
 } else if (study_name=="HVTN705") {
     # do nothing
 
-} else if(study_name %in% c("COVEBoost", "HVTN705", "NextGen_Mock", "ILiAD_IB202P", "ILiAD_IB201P")) {
+} else if(study_name %in% c("COVEBoost", "HVTN705", "NextGen_Mock", "ILiAD_IB202P", "ILiAD_IB201P","COVAIL")) {
   # nothing to do, but this is needed so that _common.R can be called for making risk score
 
 } else stop("unknown study_name 3")
