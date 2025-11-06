@@ -69,6 +69,20 @@ dat_proc$TwophasesampIndC0 <- dat_proc$ph1.C0 <- 1
 dat_proc[["ph2.C0"]]=dat_proc$ph1.C0
 dat_proc[["wt.C0"]] = 1
 
+# define a population for C14-only endpoint analysis, ILDIB202P-2100010 needs to be excluded
+dat_proc$ph1.C0_C14only <- dat_proc$ph2.C0_C14only <- dat_proc$wt.C0_C14only <- 1
+dat_proc$ph1.C0_C14only[dat_proc$Ptid == "ILDIB202P-2100010"] = 0
+dat_proc$ph2.C0_C14only[dat_proc$Ptid == "ILDIB202P-2100010"] = 0
+
+# define a population for PPAI cohort
+dat_proc$ph1.C0_PPAI <- dat_proc$ph2.C0_PPAI <- dat_proc$wt.C0_PPAI <- 1
+dat_proc$ph1.C0_PPAI[dat_proc$PPAI == 0] = 0
+dat_proc$ph2.C0_PPAI[dat_proc$PPAI == 0] = 0
+
+# define a population for PPAI & C14-only endpoint analysis, ILDIB202P-2100010 needs to be excluded
+dat_proc$ph1.C0_PPAI_C14only <- dat_proc$ph2.C0_PPAI_C14only <- dat_proc$wt.C0_PPAI_C14only <- 1
+dat_proc$ph1.C0_PPAI_C14only[dat_proc$Ptid == "ILDIB202P-2100010" | dat_proc$PPAI == 0] = 0
+dat_proc$ph2.C0_PPAI_C14only[dat_proc$Ptid == "ILDIB202P-2100010" | dat_proc$PPAI == 0] = 0
 }
 
 ```
