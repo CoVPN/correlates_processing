@@ -2,14 +2,14 @@
 data_processed: check_raw_data risk_analysis make_clean_data check_clean_data deploy_processed_dataset_auto
 
 check_raw_data:
-ifeq ($(TRIAL),$(filter $(TRIAL), moderna_boost id27hpv))
+ifeq ($(TRIAL),$(filter $(TRIAL), moderna_boost id27hpv cov2008))
 else 
 	Rscript data_clean/make_raw_dat_check.R
 endif
 
 
 risk_analysis:  
-ifeq ($(TRIAL),$(filter $(TRIAL), id27hpv covail nvx_uk302 prevent19_stage2 azd1222_stage2 nextgen_mock iliad_ib202p iliad_ib201p))
+ifeq ($(TRIAL),$(filter $(TRIAL), id27hpv covail nvx_uk302 cov2008 prevent19_stage2 azd1222_stage2 nextgen_mock iliad_ib202p iliad_ib201p))
 else
 	$(MAKE) -k -C riskscore_baseline all
 endif
@@ -37,7 +37,7 @@ endif
 
 
 check_clean_data: 
-ifeq ($(TRIAL),$(filter $(TRIAL), moderna_boost id27hpv covail))
+ifeq ($(TRIAL),$(filter $(TRIAL), moderna_boost id27hpv covail cov2008))
 else 
 	Rscript data_clean/make_clean_dat_check.R
 endif	

@@ -36,6 +36,7 @@ deploy_path <- switch(study_name,
                       NVX_UK302 =    "/trials/covpn/p3004/analysis/correlates/UK302/adata/",
                       ILiAD_IB202P =    "/trials/iliad/ib_202p/analysis/correlates/adata/",
                       ILiAD_IB201P =    "/trials/iliad/ib_201p/analysis/correlates/adata/",
+                      COV2008 =  "/trials/covpn/p3003/cov2008/correlates/adata/",
                       deploy_path
                       )  
 
