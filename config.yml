@@ -325,7 +325,7 @@ iliad_ib201p: &iliad_ib201p
 
 
 cov2008: &cov2008
-  mapped_data: /trials/covpn/p3003/cov2008/mapping_immune_correlates/adata/COV2008_mapped_20251210.csv
+  mapped_data: /trials/covpn/p3003/cov2008/mapping_immune_correlates/adata/COV2008_mapped_20251211.csv
   assay_metadata: ../correlates_reporting2/assay_metadata/cov2008_assay_metadata.csv
   two_marker_timepoints: no
   timepoints: [15] 

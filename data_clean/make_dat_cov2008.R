@@ -27,6 +27,10 @@ begin=Sys.time()
   assay_metadata=read.csv(config$assay_metadata)
   assays=assay_metadata$assay
   
+  # add a cohort indicator
+  dat_proc$Cohort = ifelse(startsWith(dat_proc$Trt, "C1"), "Ad26.COV2.S", "BNT162b2")
+  dat_proc$Cohort_short = ifelse(startsWith(dat_proc$Trt, "C1"), "Ad26", "BNT")
+  
 }
 
 
@@ -35,7 +39,7 @@ begin=Sys.time()
 {
   colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
   dat_proc <- dat_proc %>% mutate(age.geq.65 = as.integer(Age >= 65))
-  dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, PREVENT19=65, AZD1222=65, VAT08=60, PROFISCOV=NA, COV2008=65, NVX_UK302=65, stop("unknown study_name 1")))
+  dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, PREVENT19=65, AZD1222=65, VAT08=60, PROFISCOV=NA, COV2008=60, NVX_UK302=65, stop("unknown study_name 1")))
   
   # ethnicity labeling
   dat_proc$ethnicity <- ifelse(dat_proc$EthnicityHispanic == 1, labels.ethnicity[1], labels.ethnicity[2])
@@ -87,10 +91,13 @@ if (!is.null(dat_proc$Wstratum.tcell)) table(dat_proc$Wstratum.tcell) # variable
 # 4. Define ph1, ph2, and weights
 # Note that Wstratum may have NA if any variables to form strata has NA
 {
-dat_proc$ph1.D15 = ifelse(dat_proc$PPEFL=='Y',1,0)
+dat_proc$ph1.D15 = ifelse(dat_proc$PPEFL=='Y' & !is.na(dat_proc$AnyInfectionEventIndD15_7toEOS),1,0)
 dat_proc$ph1.D15.tcell = dat_proc$ph1.D15
 
-dat_proc$ph2.D15.tcell=ifelse(!is.na(dat_proc$BTerminally_Diff_CD4_Any_Cov2_S_IFNg_OR_IL2) & !is.na(dat_proc$Day15Terminally_Diff_CD4_Any_Cov2_S_IFNg_OR_IL2), 1, 0)
+dat_proc$ph2.D15.tcell=ifelse(dat_proc$ph1.D15.tcell==1 &
+                              !is.na(dat_proc$BTerminally_Diff_CD4_Any_Cov2_S_IFNg_OR_IL2) & 
+                              !is.na(dat_proc$Day15Terminally_Diff_CD4_Any_Cov2_S_IFNg_OR_IL2), 
+                              1, 0)
 
 tp=15
 dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp%.%".tcell", ph2="ph2.D"%.%tp%.%".tcell", Wstratum="Wstratum.tcell", 
@@ -190,7 +197,7 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         cov2008 = "441aba2840ca1415583d29bae9718649",
+         cov2008 = "72fbde4f1fdd82ea3d66104ecbdedc20",
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, 
       msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
