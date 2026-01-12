@@ -1805,8 +1805,8 @@
     },
     "copcor": {
       "Package": "copcor",
-      "Version": "2024.7-31",
-      "Source": "Repository",
+      "Version": "2025.12-11",
+      "Source": "GitHub",
       "LazyLoad": "yes",
       "Title": "Correlates of Protection and Correlates of Risk Functions",
       "Authors@R": "c(person(\"Youyi\", \"Fong\", role = \"cre\", email = \"youyifong@gmail.com\"), person(\"Yiwen\", \"He\", role = \"aut\", email = \"ylu2@scharp.org\"), person(\"Chenchen\", \"Yu\", role = \"aut\", email = \"cyu@scharp.org\"), person(\"Bhavesh\", \"Borate\", role = \"aut\", email = \"bborate@scharp.org\"), person(\"Peter\", \"Gilbert\", role = \"aut\", email = \"pgilbert@fredhutch.org\"))",
@@ -1815,21 +1815,33 @@
         "kyotil"
       ],
       "Imports": [
-        "methods"
+        "methods",
+        "survival",
+        "survey",
+        "marginalizedRisk",
+        "Hmisc",
+        "assertthat",
+        "plotrix",
+        "here",
+        "future",
+        "mitools"
       ],
       "Suggests": [
         "RUnit",
         "R.rsp",
-        "survival"
+        "riskRegression"
       ],
       "Description": "Correlates of protection (CoP) and correlates of risk (CoR) study the immune biomarkers associated with an infectious disease outcome, e.g. COVID or HIV-1 infection. This package contains shared functions for analyzing CoP and CoR, including bootstrapping procedures, competing risk estimation, and bootstrapping marginalized risks.",
       "VignetteBuilder": "R.rsp",
       "License": "GPL (>= 2)",
-      "NeedsCompilation": "no",
       "Author": "Youyi Fong [cre], Yiwen He [aut], Chenchen Yu [aut], Bhavesh Borate [aut], Peter Gilbert [aut]",
       "Maintainer": "Youyi Fong <youyifong@gmail.com>",
-      "Repository": "RSPM",
-      "Encoding": "UTF-8"
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteUsername": "CoVPN",
+      "RemoteRepo": "copcor",
+      "RemoteRef": "main",
+      "RemoteSha": "1aef52918d61bd60b046b6543abbf8aef61b2ac7"
     },
     "cowplot": {
       "Package": "cowplot",
@@ -4139,7 +4151,7 @@
     },
     "kyotil": {
       "Package": "kyotil",
-      "Version": "2025.6-7",
+      "Version": "2025.12-12",
       "Source": "GitHub",
       "LazyLoad": "yes",
       "LazyData": "yes",
@@ -4173,7 +4185,10 @@
         "survey",
         "magick",
         "WeightedROC",
-        "saws"
+        "saws",
+        "pROC",
+        "PRROC",
+        "officer"
       ],
       "Description": "Helper functions for creating formatted summary of regression models, writing publication-ready tables to latex files, and running Monte Carlo experiments.",
       "VignetteBuilder": "R.rsp",
@@ -4183,10 +4198,10 @@
       "Maintainer": "Youyi Fong <youyifong@gmail.com>",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
-      "RemoteRepo": "kyotil",
       "RemoteUsername": "youyifong",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "4ea09ce9b60966d968dd6185cc0a36703a7af065"
+      "RemoteRepo": "kyotil",
+      "RemoteRef": "master",
+      "RemoteSha": "09cd3f327d4351dfaa173bc56f79aec7c5eedcf1"
     },
     "labeling": {
       "Package": "labeling",
@@ -4558,6 +4573,31 @@
       "Author": "Stefan Milton Bache [aut, cph] (Original author and creator of magrittr), Hadley Wickham [aut], Lionel Henry [cre], RStudio [cph, fnd]",
       "Maintainer": "Lionel Henry <lionel@rstudio.com>",
       "Repository": "CRAN"
+    },
+    "marginalizedRisk": {
+      "Package": "marginalizedRisk",
+      "Version": "2024.5-17",
+      "Source": "Repository",
+      "LazyLoad": "yes",
+      "Title": "Estimating Marginalized Risk",
+      "Authors@R": "c(person(\"Youyi\", \"Fong\", role = \"cre\", email = \"youyifong@gmail.com\"), person(\"Peter\", \"Gilbert\", role = \"aut\", email = \"pgilbert@scharp.org\"), person(\"Marco\", \"Carone\", role = \"aut\", email = \"mcarone@uw.edu\") )",
+      "Depends": [
+        "R (>= 4.0)"
+      ],
+      "Imports": [],
+      "Suggests": [
+        "RUnit",
+        "R.rsp",
+        "survival"
+      ],
+      "Description": "Estimates risk as a function of a marker by integrating over other covariates in a conditional risk model.",
+      "VignetteBuilder": "R.rsp",
+      "License": "GPL (>= 2)",
+      "NeedsCompilation": "no",
+      "Author": "Youyi Fong [cre], Peter Gilbert [aut], Marco Carone [aut]",
+      "Maintainer": "Youyi Fong <youyifong@gmail.com>",
+      "Repository": "RSPM",
+      "Encoding": "UTF-8"
     },
     "mdw": {
       "Package": "mdw",
@@ -5476,6 +5516,31 @@
       "Author": "Hadley Wickham [aut], Winston Chang [aut], Jim Hester [aut], Lionel Henry [aut, cre], Posit Software, PBC [cph, fnd], R Core team [ctb] (Some namespace and vignette code extracted from base R)",
       "Maintainer": "Lionel Henry <lionel@posit.co>",
       "Repository": "RSPM"
+    },
+    "plotrix": {
+      "Package": "plotrix",
+      "Version": "3.8-13",
+      "Source": "Repository",
+      "Title": "Various Plotting Functions",
+      "Authors@R": "c( person(\"Jim\", \"Lemon\", role = \"aut\"), person(\"Ben\", \"Bolker\", role = \"ctb\"), person(\"Sander\", \"Oom\", role = \"ctb\"), person(\"Eduardo\", \"Klein\", role = \"ctb\"), person(\"Barry\", \"Rowlingson\", role = \"ctb\"), person(\"Hadley\", \"Wickham\", role = \"ctb\"), person(\"Anupam\", \"Tyagi\", role = \"ctb\"), person(\"Olivier\", \"Eterradossi\", role = \"ctb\"), person(\"Gabor\", \"Grothendieck\", role = \"ctb\"), person(\"Michael\", \"Toews\", role = \"ctb\"), person(\"John\", \"Kane\", role = \"ctb\"), person(\"Rolf\", \"Turner\", role = \"ctb\"), person(\"Carl\", \"Witthoft\", role = \"ctb\"), person(\"Julian\", \"Stander\", role = \"ctb\"), person(\"Thomas\", \"Petzoldt\", role = \"ctb\"), person(\"Remko\", \"Duursma\", role = \"ctb\"), person(\"Elisa\", \"Biancotto\", role = \"ctb\"), person(\"Ofir\", \"Levy\", role = \"ctb\"), person(\"Christophe\", \"Dutang\", role = \"ctb\"), person(\"Peter\", \"Solymos\", role = \"ctb\"), person(\"Robby\", \"Engelmann\", role = \"ctb\"), person(\"Michael\", \"Hecker\", role = \"ctb\"), person(\"Felix\", \"Steinbeck\", role = \"ctb\"), person(\"Hans\", \"Borchers\", role = \"ctb\"), person(\"Henrik\", \"Singmann\", role = \"ctb\"), person(\"Ted\", \"Toal\", role = \"ctb\"), person(\"Derek\", \"Ogle\", role = \"ctb\"), person(\"Darshan\", \"Baral\", role = \"ctb\"), person(\"Ulrike\", \"Groemping\", role = \"ctb\"), person(\"Bill\", \"Venables\", role = \"ctb\"), person(family = \"The CRAN Team\", role = \"ctb\"), person(\"Duncan\", \"Murdoch\", email = \"murdoch.duncan@gmail.com\", role = c(\"ctb\", \"cre\")))",
+      "Imports": [
+        "grDevices",
+        "graphics",
+        "stats",
+        "utils"
+      ],
+      "Description": "Lots of plots, various labeling, axis and color scaling functions. The author/maintainer died in September 2023.",
+      "License": "GPL (>= 2)",
+      "NeedsCompilation": "no",
+      "Depends": [
+        "R (>= 3.5.0)"
+      ],
+      "Repository": "RSPM",
+      "URL": "https://plotrix.github.io/plotrix/, https://github.com/plotrix/plotrix",
+      "BugReports": "https://github.com/plotrix/plotrix/issues",
+      "Author": "Jim Lemon [aut], Ben Bolker [ctb], Sander Oom [ctb], Eduardo Klein [ctb], Barry Rowlingson [ctb], Hadley Wickham [ctb], Anupam Tyagi [ctb], Olivier Eterradossi [ctb], Gabor Grothendieck [ctb], Michael Toews [ctb], John Kane [ctb], Rolf Turner [ctb], Carl Witthoft [ctb], Julian Stander [ctb], Thomas Petzoldt [ctb], Remko Duursma [ctb], Elisa Biancotto [ctb], Ofir Levy [ctb], Christophe Dutang [ctb], Peter Solymos [ctb], Robby Engelmann [ctb], Michael Hecker [ctb], Felix Steinbeck [ctb], Hans Borchers [ctb], Henrik Singmann [ctb], Ted Toal [ctb], Derek Ogle [ctb], Darshan Baral [ctb], Ulrike Groemping [ctb], Bill Venables [ctb], The CRAN Team [ctb], Duncan Murdoch [ctb, cre]",
+      "Maintainer": "Duncan Murdoch <murdoch.duncan@gmail.com>",
+      "Encoding": "UTF-8"
     },
     "plyr": {
       "Package": "plyr",
