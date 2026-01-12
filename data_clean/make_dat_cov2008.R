@@ -30,6 +30,7 @@ begin=Sys.time()
   # add a cohort indicator
   dat_proc$Cohort = ifelse(startsWith(dat_proc$Trt, "C1"), "Ad26.COV2.S", "BNT162b2")
   dat_proc$Cohort_short = ifelse(startsWith(dat_proc$Trt, "C1"), "Ad26", "BNT")
+  dat_proc$CohortInd = ifelse(startsWith(dat_proc$Trt, "C1"), 1, 2)
   
 }
 
@@ -79,7 +80,8 @@ names(Bstratum.labels) <- Bstratum.labels
   
 dat_proc$demo.stratum = 1 # # there are no demographics stratum for subcohort sampling
 
-dat_proc <- dat_proc %>% mutate(tps.stratum = Trt)
+dat_proc$tps.stratum = as.numeric(substr(dat_proc$Trt, 5, 5))
+
 if (!is.null(dat_proc$tps.stratum)) table(dat_proc$tps.stratum)
 
 dat_proc$Wstratum.tcell = dat_proc$tps.stratum
