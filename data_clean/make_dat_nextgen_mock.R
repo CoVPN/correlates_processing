@@ -98,15 +98,17 @@ tp="31_7"
 dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp,    ph2="ph2.covid.sera.D"%.%tp,      Wstratum="Wstratum",       wt="wt.covid.sera.D"%.%tp,     verbose=T) 
 dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp,    ph2="ph2.covid.saliva.D"%.%tp,    Wstratum="Wstratum",       wt="wt.covid.saliva.D"%.%tp,   verbose=T) 
 dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp,    ph2="ph2.covid.nasal.D"%.%tp,     Wstratum="Wstratum",       wt="wt.covid.nasal.D"%.%tp,    verbose=T) 
-dat_proc = add.wt(dat_proc, ph1="ph1.AB.D"%.%tp, ph2="ph2.covid.AB.D"%.%tp,        Wstratum="Wstratum",       wt="wt.covid.AB.D"%.%tp,       verbose=T)
+
 dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp,    ph2="ph2.inf.sera.D"%.%tp,      Wstratum="Wstratum",       wt="wt.inf.sera.D"%.%tp,     verbose=T) 
 dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp,    ph2="ph2.inf.saliva.D"%.%tp,    Wstratum="Wstratum",       wt="wt.inf.saliva.D"%.%tp,   verbose=T) 
 dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp,    ph2="ph2.inf.nasal.D"%.%tp,     Wstratum="Wstratum",       wt="wt.inf.nasal.D"%.%tp,    verbose=T) 
-dat_proc = add.wt(dat_proc, ph1="ph1.AB.D"%.%tp, ph2="ph2.inf.AB.D"%.%tp,        Wstratum="Wstratum",       wt="wt.inf.AB.D"%.%tp,       verbose=T)
+
+dat_proc = add.wt(dat_proc, ph1="ph1.AB.D"%.%tp, ph2="ph2.AB.D"%.%tp,        Wstratum="Wstratum",       wt="wt.AB.D"%.%tp,       verbose=T)
 
 dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp,    ph2="ph2.sera.immuno",      Wstratum="tps.stratum",    wt="wt.sera.immuno",     verbose=T) 
 dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp,    ph2="ph2.saliva.immuno",    Wstratum="tps.stratum",    wt="wt.sera.immuno",     verbose=T) 
 dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp,    ph2="ph2.nasal.immuno",     Wstratum="tps.stratum",    wt="wt.nasal.immuno",    verbose=T) 
+
 dat_proc = add.wt(dat_proc, ph1="ph1.AB.D"%.%tp, ph2="ph2.AB.immuno",        Wstratum="tps.stratum",    wt="wt.AB.immuno",       verbose=T)
 }
 
